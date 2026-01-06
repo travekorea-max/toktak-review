@@ -10,9 +10,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Loader2, CheckCircle2, ArrowLeft } from 'lucide-react'
 
 const clientRegisterSchema = z.object({
   email: z.string().email('올바른 이메일 형식이 아닙니다'),
@@ -142,7 +141,6 @@ export default function ClientRegisterPage() {
       setError(null)
       setIsLoading(true)
 
-      // Supabase 회원가입
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -165,11 +163,8 @@ export default function ClientRegisterPage() {
         return
       }
 
-      // users 테이블은 트리거가 자동으로 생성하므로 생략
-      // 잠시 대기 (트리거 실행 시간)
       await new Promise(resolve => setTimeout(resolve, 1000))
 
-      // role을 client로 업데이트
       const { error: updateError } = await supabase
         .from('users')
         .update({ role: 'client' })
@@ -181,7 +176,6 @@ export default function ClientRegisterPage() {
         return
       }
 
-      // client_profiles 테이블에 프로필 정보 저장
       const { error: profileError } = await supabase
         .from('client_profiles')
         .insert({
@@ -201,7 +195,6 @@ export default function ClientRegisterPage() {
         return
       }
 
-      // 회원가입 성공
       alert('회원가입이 완료되었습니다!')
       router.push('/auth/login')
     } catch (err) {
@@ -213,144 +206,191 @@ export default function ClientRegisterPage() {
   }
 
   return (
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">업체 회원가입</CardTitle>
-        <CardDescription className="text-center">
-          체험단 모집으로 제품을 홍보하세요
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+    <div className="max-w-lg mx-auto">
+      {/* 뒤로가기 */}
+      <Link href="/auth/register" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 mb-6">
+        <ArrowLeft className="w-4 h-4" />
+        가입 유형 선택
+      </Link>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">이메일 *</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="example@email.com"
-                {...register('email')}
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
-              )}
-            </div>
+      {/* 타이틀 */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">광고주 회원가입</h1>
+        <p className="text-sm text-gray-500 mt-2">
+          체험단 모집으로 매출을 올리세요
+        </p>
+      </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="companyName">회사명 *</Label>
-              <Input
-                id="companyName"
-                type="text"
-                placeholder="(주)회사명"
-                {...register('companyName')}
-                disabled={isLoading}
-              />
-              {errors.companyName && (
-                <p className="text-sm text-red-500">{errors.companyName.message}</p>
-              )}
-            </div>
+      {/* 폼 */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-100 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
+        {/* 계정 정보 섹션 */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-gray-900">계정 정보</h3>
+
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+              이메일 <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="example@company.com"
+              className="h-11 bg-white border-gray-200"
+              {...register('email')}
+              disabled={isLoading}
+            />
+            {errors.email && (
+              <p className="text-xs text-red-500">{errors.email.message}</p>
+            )}
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="password">비밀번호 *</Label>
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                비밀번호 <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="최소 6자 이상"
+                placeholder="최소 6자"
+                className="h-11 bg-white border-gray-200"
                 {...register('password')}
                 disabled={isLoading}
               />
               {errors.password && (
-                <p className="text-sm text-red-500">{errors.password.message}</p>
+                <p className="text-xs text-red-500">{errors.password.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="passwordConfirm">비밀번호 확인 *</Label>
+              <Label htmlFor="passwordConfirm" className="text-sm font-medium text-gray-700">
+                비밀번호 확인 <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="passwordConfirm"
                 type="password"
-                placeholder="비밀번호를 다시 입력하세요"
+                placeholder="비밀번호 확인"
+                className="h-11 bg-white border-gray-200"
                 {...register('passwordConfirm')}
                 disabled={isLoading}
               />
               {errors.passwordConfirm && (
-                <p className="text-sm text-red-500">{errors.passwordConfirm.message}</p>
+                <p className="text-xs text-red-500">{errors.passwordConfirm.message}</p>
               )}
             </div>
           </div>
+        </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+        {/* 사업자 정보 섹션 */}
+        <div className="space-y-4 pt-4 border-t border-gray-100">
+          <h3 className="text-sm font-medium text-gray-900">사업자 정보</h3>
+
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="businessNumber">사업자등록번호 *</Label>
+              <Label htmlFor="companyName" className="text-sm font-medium text-gray-700">
+                회사명 <span className="text-red-500">*</span>
+              </Label>
               <Input
-                id="businessNumber"
+                id="companyName"
                 type="text"
-                placeholder="1234567890 (- 제외)"
-                {...register('businessNumber')}
+                placeholder="(주)회사명"
+                className="h-11 bg-white border-gray-200"
+                {...register('companyName')}
                 disabled={isLoading}
               />
-              {errors.businessNumber && (
-                <p className="text-sm text-red-500">{errors.businessNumber.message}</p>
+              {errors.companyName && (
+                <p className="text-xs text-red-500">{errors.companyName.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="representativeName">대표자명 *</Label>
+              <Label htmlFor="representativeName" className="text-sm font-medium text-gray-700">
+                대표자명 <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="representativeName"
                 type="text"
                 placeholder="홍길동"
+                className="h-11 bg-white border-gray-200"
                 {...register('representativeName')}
                 disabled={isLoading}
               />
               {errors.representativeName && (
-                <p className="text-sm text-red-500">{errors.representativeName.message}</p>
+                <p className="text-xs text-red-500">{errors.representativeName.message}</p>
               )}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">전화번호 *</Label>
+            <Label htmlFor="businessNumber" className="text-sm font-medium text-gray-700">
+              사업자등록번호 <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="businessNumber"
+              type="text"
+              placeholder="1234567890 (- 제외 10자리)"
+              className="h-11 bg-white border-gray-200"
+              {...register('businessNumber')}
+              disabled={isLoading}
+              maxLength={10}
+            />
+            {errors.businessNumber && (
+              <p className="text-xs text-red-500">{errors.businessNumber.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+              담당자 연락처 <span className="text-red-500">*</span>
+            </Label>
             <div className="flex gap-2">
               <Input
                 id="phone"
                 type="tel"
                 placeholder="010-1234-5678"
+                className="h-11 bg-white border-gray-200 flex-1"
                 {...register('phone')}
                 disabled={isLoading || phoneVerified}
               />
               <Button
                 type="button"
-                variant="outline"
+                variant={phoneVerified ? "default" : "outline"}
                 onClick={sendVerificationCode}
                 disabled={isLoading || sendingCode || phoneVerified || !phone}
-                className="whitespace-nowrap"
+                className={`h-11 px-4 whitespace-nowrap ${phoneVerified ? 'bg-emerald-500 hover:bg-emerald-600' : ''}`}
               >
-                {phoneVerified ? '인증완료' : sendingCode ? '발송중...' : codeSent ? '재발송' : '인증번호'}
+                {phoneVerified ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                    완료
+                  </>
+                ) : sendingCode ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : codeSent ? '재발송' : '인증'}
               </Button>
             </div>
             {errors.phone && (
-              <p className="text-sm text-red-500">{errors.phone.message}</p>
+              <p className="text-xs text-red-500">{errors.phone.message}</p>
             )}
           </div>
 
           {codeSent && !phoneVerified && (
             <div className="space-y-2">
-              <Label htmlFor="verificationCode">인증번호 *</Label>
+              <Label htmlFor="verificationCode" className="text-sm font-medium text-gray-700">
+                인증번호
+              </Label>
               <div className="flex gap-2">
                 <Input
                   id="verificationCode"
                   type="text"
                   placeholder="6자리 숫자"
+                  className="h-11 bg-white border-gray-200 flex-1"
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value)}
                   disabled={isLoading || verifyingCode || phoneVerified}
@@ -360,76 +400,74 @@ export default function ClientRegisterPage() {
                   type="button"
                   onClick={verifyCode}
                   disabled={isLoading || verifyingCode || !verificationCode}
-                  className="whitespace-nowrap"
+                  className="h-11 px-6 bg-gray-900 hover:bg-gray-800"
                 >
-                  {verifyingCode ? '확인중...' : '확인'}
+                  {verifyingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : '확인'}
                 </Button>
               </div>
-              <p className="text-sm text-gray-500">인증번호는 5분간 유효합니다</p>
+              <p className="text-xs text-gray-500">인증번호는 5분간 유효합니다</p>
             </div>
           )}
+        </div>
 
-          {phoneVerified && (
-            <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-md">
-              <p className="text-sm text-green-600 dark:text-green-400">✓ 휴대폰 인증이 완료되었습니다</p>
-            </div>
+        {/* 약관 동의 */}
+        <div className="space-y-3 pt-4 border-t border-gray-100">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="agreeTerms"
+              checked={agreeTerms}
+              onCheckedChange={(checked) => setValue('agreeTerms', checked as boolean)}
+              disabled={isLoading}
+            />
+            <label htmlFor="agreeTerms" className="text-sm text-gray-600">
+              <Link href="#" className="text-gray-900 hover:underline">이용약관</Link>에 동의합니다 (필수)
+            </label>
+          </div>
+          {errors.agreeTerms && (
+            <p className="text-xs text-red-500">{errors.agreeTerms.message}</p>
           )}
 
-          <div className="space-y-3 pt-4 border-t">
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="agreeTerms"
-                checked={agreeTerms}
-                onCheckedChange={(checked) => setValue('agreeTerms', checked as boolean)}
-                disabled={isLoading}
-              />
-              <div className="grid gap-1.5 leading-none">
-                <label
-                  htmlFor="agreeTerms"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  이용약관 동의 (필수)
-                </label>
-              </div>
-            </div>
-            {errors.agreeTerms && (
-              <p className="text-sm text-red-500">{errors.agreeTerms.message}</p>
-            )}
-
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="agreePrivacy"
-                checked={agreePrivacy}
-                onCheckedChange={(checked) => setValue('agreePrivacy', checked as boolean)}
-                disabled={isLoading}
-              />
-              <div className="grid gap-1.5 leading-none">
-                <label
-                  htmlFor="agreePrivacy"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  개인정보처리방침 동의 (필수)
-                </label>
-              </div>
-            </div>
-            {errors.agreePrivacy && (
-              <p className="text-sm text-red-500">{errors.agreePrivacy.message}</p>
-            )}
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="agreePrivacy"
+              checked={agreePrivacy}
+              onCheckedChange={(checked) => setValue('agreePrivacy', checked as boolean)}
+              disabled={isLoading}
+            />
+            <label htmlFor="agreePrivacy" className="text-sm text-gray-600">
+              <Link href="#" className="text-gray-900 hover:underline">개인정보처리방침</Link>에 동의합니다 (필수)
+            </label>
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? '가입 중...' : '회원가입'}
-          </Button>
+          {errors.agreePrivacy && (
+            <p className="text-xs text-red-500">{errors.agreePrivacy.message}</p>
+          )}
+        </div>
 
-          <div className="text-sm text-center text-gray-600 dark:text-gray-400">
-            이미 계정이 있으신가요?{' '}
-            <Link href="/login" className="text-blue-600 hover:underline dark:text-blue-400">
-              로그인
-            </Link>
-          </div>
-        </CardFooter>
+        <Button
+          type="submit"
+          className="w-full h-11 bg-gray-900 hover:bg-gray-800 text-white font-medium"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              가입 중...
+            </>
+          ) : (
+            '회원가입'
+          )}
+        </Button>
       </form>
-    </Card>
+
+      {/* 로그인 링크 */}
+      <div className="text-center mt-6">
+        <p className="text-sm text-gray-500">
+          이미 계정이 있으신가요?{' '}
+          <Link href="/auth/login" className="text-gray-900 font-medium hover:underline">
+            로그인
+          </Link>
+        </p>
+      </div>
+    </div>
   )
 }

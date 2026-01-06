@@ -11,8 +11,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Loader2 } from 'lucide-react'
 
 const loginSchema = z.object({
   email: z.string().email('올바른 이메일 형식이 아닙니다'),
@@ -41,7 +40,6 @@ export default function LoginPage() {
       setError(null)
       setIsLoading(true)
 
-      // Supabase 로그인
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
@@ -57,7 +55,6 @@ export default function LoginPage() {
         return
       }
 
-      // 사용자 정보 조회
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
@@ -71,7 +68,6 @@ export default function LoginPage() {
 
       setUser(userData)
 
-      // 역할에 따라 프로필 조회
       if (userData.role === 'reviewer') {
         const { data: profile } = await supabase
           .from('reviewer_profiles')
@@ -102,62 +98,97 @@ export default function LoginPage() {
   }
 
   return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">로그인</CardTitle>
-        <CardDescription className="text-center">
+    <div>
+      {/* 타이틀 */}
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">로그인</h1>
+        <p className="text-sm text-gray-500 mt-2">
           톡톡리뷰에 오신 것을 환영합니다
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+        </p>
+      </div>
+
+      {/* 폼 */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-100 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+            이메일
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="example@email.com"
+            className="h-11 bg-white border-gray-200 focus:border-[#4F46E5] focus:ring-[#4F46E5]"
+            {...register('email')}
+            disabled={isLoading}
+          />
+          {errors.email && (
+            <p className="text-xs text-red-500">{errors.email.message}</p>
           )}
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">이메일</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="example@email.com"
-              {...register('email')}
-              disabled={isLoading}
-            />
-            {errors.email && (
-              <p className="text-sm text-red-500">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">비밀번호</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              {...register('password')}
-              disabled={isLoading}
-            />
-            {errors.password && (
-              <p className="text-sm text-red-500">{errors.password.message}</p>
-            )}
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? '로그인 중...' : '로그인'}
-          </Button>
-
-          <div className="text-sm text-center text-gray-600 dark:text-gray-400">
-            계정이 없으신가요?{' '}
-            <Link href="/auth/register" className="text-blue-600 hover:underline dark:text-blue-400">
-              회원가입
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+              비밀번호
+            </Label>
+            <Link href="/auth/forgot-password" className="text-xs text-gray-500 hover:text-[#4F46E5]">
+              비밀번호 찾기
             </Link>
           </div>
-        </CardFooter>
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            className="h-11 bg-white border-gray-200 focus:border-[#4F46E5] focus:ring-[#4F46E5]"
+            {...register('password')}
+            disabled={isLoading}
+          />
+          {errors.password && (
+            <p className="text-xs text-red-500">{errors.password.message}</p>
+          )}
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full h-11 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-medium"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              로그인 중...
+            </>
+          ) : (
+            '로그인'
+          )}
+        </Button>
       </form>
-    </Card>
+
+      {/* 구분선 */}
+      <div className="relative my-8">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-200" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="px-4 bg-[#FAFBFC] text-gray-400">또는</span>
+        </div>
+      </div>
+
+      {/* 회원가입 링크 */}
+      <div className="text-center">
+        <p className="text-sm text-gray-500">
+          아직 계정이 없으신가요?{' '}
+          <Link href="/auth/register" className="text-[#4F46E5] font-medium hover:underline">
+            회원가입
+          </Link>
+        </p>
+      </div>
+    </div>
   )
 }

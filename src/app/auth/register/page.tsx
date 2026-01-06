@@ -2,73 +2,91 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { UserCircle, Building2 } from 'lucide-react'
+import { Gift, Building2, ArrowRight, CheckCircle2 } from 'lucide-react'
 
 export default function RegisterPage() {
   const router = useRouter()
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold">회원가입</h1>
-        <p className="text-gray-600 dark:text-gray-400">
+    <div className="max-w-md mx-auto">
+      {/* 타이틀 */}
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">회원가입</h1>
+        <p className="text-sm text-gray-500 mt-2">
           가입 유형을 선택해주세요
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="cursor-pointer hover:border-blue-500 transition-colors" onClick={() => router.push('/auth/register/reviewer')}>
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <UserCircle className="w-16 h-16 text-blue-500" />
+      {/* 선택 카드 */}
+      <div className="space-y-3">
+        {/* 리뷰어 */}
+        <button
+          onClick={() => router.push('/auth/register/reviewer')}
+          className="w-full p-5 bg-white border border-gray-200 rounded-xl text-left hover:border-[#4F46E5] hover:shadow-md transition-all group"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-[#EEF2FF] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-[#4F46E5] transition-colors">
+              <Gift className="w-6 h-6 text-[#4F46E5] group-hover:text-white transition-colors" />
             </div>
-            <CardTitle>리뷰어 가입</CardTitle>
-            <CardDescription>
-              체험단 활동으로 포인트 적립
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2 mb-4">
-              <li>✓ 다양한 제품 무료 체험</li>
-              <li>✓ 리뷰 작성 후 포인트 적립</li>
-              <li>✓ 포인트 현금 출금 가능</li>
-            </ul>
-            <Button className="w-full">
-              리뷰어로 가입하기
-            </Button>
-          </CardContent>
-        </Card>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-semibold text-gray-900">리뷰어</h3>
+                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#4F46E5] transition-colors" />
+              </div>
+              <p className="text-sm text-gray-500 mb-3">
+                무료 체험하고 포인트 받기
+              </p>
+              <ul className="space-y-1">
+                {['다양한 제품 무료 체험', '리뷰당 최대 50,000P', '매주 수요일 출금'].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-xs text-gray-500">
+                    <CheckCircle2 className="w-3 h-3 text-[#4F46E5]" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </button>
 
-        <Card className="cursor-pointer hover:border-purple-500 transition-colors" onClick={() => router.push('/auth/register/client')}>
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Building2 className="w-16 h-16 text-purple-500" />
+        {/* 업체 */}
+        <button
+          onClick={() => router.push('/auth/register/client')}
+          className="w-full p-5 bg-white border border-gray-200 rounded-xl text-left hover:border-gray-900 hover:shadow-md transition-all group"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-gray-900 transition-colors">
+              <Building2 className="w-6 h-6 text-gray-600 group-hover:text-white transition-colors" />
             </div>
-            <CardTitle>업체 가입</CardTitle>
-            <CardDescription>
-              체험단 모집으로 제품 홍보
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2 mb-4">
-              <li>✓ 제품 체험단 모집 캠페인 등록</li>
-              <li>✓ 리뷰어 선정 및 관리</li>
-              <li>✓ 리뷰 검수 및 승인</li>
-            </ul>
-            <Button className="w-full" variant="outline">
-              업체로 가입하기
-            </Button>
-          </CardContent>
-        </Card>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-semibold text-gray-900">광고주</h3>
+                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-900 transition-colors" />
+              </div>
+              <p className="text-sm text-gray-500 mb-3">
+                체험단 모집으로 매출 올리기
+              </p>
+              <ul className="space-y-1">
+                {['50,000+ 검증된 리뷰어', '실시간 캠페인 분석', '2차 콘텐츠 활용'].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-xs text-gray-500">
+                    <CheckCircle2 className="w-3 h-3 text-gray-600" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </button>
       </div>
 
-      <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-        이미 계정이 있으신가요?{' '}
-        <Link href="/auth/login" className="text-blue-600 hover:underline dark:text-blue-400">
-          로그인
-        </Link>
+      {/* 로그인 링크 */}
+      <div className="text-center mt-8">
+        <p className="text-sm text-gray-500">
+          이미 계정이 있으신가요?{' '}
+          <Link href="/auth/login" className="text-[#4F46E5] font-medium hover:underline">
+            로그인
+          </Link>
+        </p>
       </div>
     </div>
   )
