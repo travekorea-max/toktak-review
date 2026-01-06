@@ -1,0 +1,253 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { Upload, AlertCircle, CheckCircle } from 'lucide-react'
+import { Database } from '@/types/database'
+
+type Application = Database['public']['Tables']['applications']['Row'] & {
+  campaigns?: Database['public']['Tables']['campaigns']['Row']
+}
+
+export default function ReviewSubmitPage() {
+  const params = useParams()
+  const id = params.id as string
+  const router = useRouter()
+  const supabase = createClient()
+
+  const [application, setApplication] = useState<Application | null>(null)
+  const [reviewUrl, setReviewUrl] = useState('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string>('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (id) {
+      fetchApplication()
+    }
+  }, [id])
+
+  const fetchApplication = async () => {
+    try {
+      const { data } = await supabase
+        .from('applications')
+        .select(`
+          *,
+          campaigns (*)
+        `)
+        .eq('id', id)
+        .single()
+
+      setApplication(data)
+    } catch (err) {
+      console.error('Error fetching application:', err)
+    }
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setImageFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!reviewUrl.trim()) {
+      alert('리뷰 URL을 입력해주세요')
+      return
+    }
+
+    if (!imageFile) {
+      alert('리뷰 스크린샷을 업로드해주세요')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      setError(null)
+
+      // 이미지 업로드
+      const imageUrl = imagePreview // 실제로는 Storage URL
+
+      const { error: insertError } = await supabase
+        .from('review_submissions')
+        .insert({
+          application_id: id as string,
+          review_url: reviewUrl,
+          image_url: imageUrl,
+          platform: application?.platform || 'naver',
+          status: 'pending',
+        })
+
+      if (insertError) throw insertError
+
+      alert('리뷰가 제출되었습니다. 검수 후 포인트가 지급됩니다.')
+      router.push(`/reviewer/my-activities/${id}`)
+    } catch (err) {
+      console.error('Error submitting review:', err)
+      setError('리뷰 제출 중 오류가 발생했습니다')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (!application || !application.campaigns) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>잘못된 접근입니다</AlertDescription>
+      </Alert>
+    )
+  }
+
+  const campaign = application.campaigns
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">리뷰 작성</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
+          {campaign.title}
+        </p>
+      </div>
+
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          <ul className="list-disc list-inside space-y-1 text-sm">
+            <li>리뷰 작성 후 리뷰 URL과 스크린샷을 제출해주세요</li>
+            <li>리뷰 가이드를 준수하지 않으면 포인트가 지급되지 않을 수 있습니다</li>
+            <li>허위 리뷰 작성 시 법적 책임을 질 수 있습니다</li>
+          </ul>
+        </AlertDescription>
+      </Alert>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>리뷰 작성 가이드</CardTitle>
+          <CardDescription>다음 기준을 충족하는 리뷰를 작성해주세요</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-green-500" />
+            <span>최소 {campaign.min_text_length}자 이상</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-green-500" />
+            <span>최소 {campaign.min_photo_count}장 이상의 사진</span>
+          </div>
+          {campaign.required_keywords && campaign.required_keywords.length > 0 && (
+            <div>
+              <p className="text-sm text-gray-500 mb-2">필수 키워드 포함:</p>
+              <div className="flex flex-wrap gap-2">
+                {campaign.required_keywords.map((keyword, index) => (
+                  <Badge key={index} variant="outline">{keyword}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>리뷰 정보</CardTitle>
+            <CardDescription>작성한 리뷰의 정보를 입력해주세요</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="reviewUrl">리뷰 URL *</Label>
+              <Input
+                id="reviewUrl"
+                type="url"
+                placeholder="https://..."
+                value={reviewUrl}
+                onChange={(e) => setReviewUrl(e.target.value)}
+                required
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                작성한 리뷰 페이지의 URL을 입력하세요
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="image">리뷰 스크린샷 *</Label>
+              <div className="mt-2">
+                <input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="image"
+                  className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                >
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-full object-contain rounded-lg"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Upload className="w-12 h-12 mb-4 text-gray-400" />
+                      <p className="mb-2 text-sm text-gray-500">
+                        <span className="font-semibold">클릭하여 업로드</span> 또는 드래그 앤 드롭
+                      </p>
+                      <p className="text-xs text-gray-500">PNG, JPG (최대 10MB)</p>
+                    </div>
+                  )}
+                </label>
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                작성한 리뷰 전체 화면의 스크린샷을 업로드해주세요
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            className="flex-1"
+          >
+            취소
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting || !reviewUrl || !imageFile}
+            className="flex-1"
+          >
+            {isSubmitting ? '제출 중...' : '제출하기'}
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}

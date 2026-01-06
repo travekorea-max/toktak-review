@@ -1,0 +1,298 @@
+'use client'
+
+import { useState, useEffect, use } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { formatNumber } from '@/lib/billing'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import {
+  CheckCircle2,
+  Copy,
+  Check,
+  Clock,
+  Building2,
+  ArrowRight,
+  Home,
+} from 'lucide-react'
+
+interface PaymentInfo {
+  id: string
+  campaign_id: string
+  total_amount: number
+  payment_status: string
+  virtual_bank_name: string | null
+  virtual_account_number: string | null
+  virtual_account_holder: string | null
+  campaigns: {
+    title: string
+    product_name: string
+  }
+}
+
+export default function BankTransferPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = use(params)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const paymentId = searchParams.get('payment_id')
+  const supabase = createClient()
+
+  const [payment, setPayment] = useState<PaymentInfo | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState<string | null>(null)
+
+  // 가상계좌 정보 (실제로는 PG사 연동 필요)
+  const virtualAccount = {
+    bankName: 'KB국민은행',
+    accountNumber: '123-456-789012',
+    holder: '(주)톡톡리뷰',
+    dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3일 후
+  }
+
+  useEffect(() => {
+    if (paymentId) {
+      fetchPayment()
+    }
+  }, [paymentId])
+
+  const fetchPayment = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('campaign_payments')
+        .select(`
+          id,
+          campaign_id,
+          total_amount,
+          payment_status,
+          virtual_bank_name,
+          virtual_account_number,
+          virtual_account_holder,
+          campaigns (
+            title,
+            product_name
+          )
+        `)
+        .eq('id', paymentId)
+        .single()
+
+      if (error) throw error
+      setPayment(data as any)
+
+      // 가상계좌 정보 업데이트 (실제로는 PG사에서 받아옴)
+      await supabase
+        .from('campaign_payments')
+        .update({
+          virtual_bank_name: virtualAccount.bankName,
+          virtual_account_number: virtualAccount.accountNumber,
+          virtual_account_holder: virtualAccount.holder,
+          virtual_account_due_date: virtualAccount.dueDate.toISOString(),
+        })
+        .eq('id', paymentId)
+
+    } catch (err) {
+      console.error('Error fetching payment:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(field)
+    setTimeout(() => setCopied(null), 2000)
+  }
+
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    )
+  }
+
+  if (!payment) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Alert variant="destructive">
+          <AlertDescription>결제 정보를 찾을 수 없습니다</AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* 성공 헤더 */}
+      <div className="text-center py-8">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full mb-4">
+          <CheckCircle2 className="h-8 w-8 text-green-600" />
+        </div>
+        <h1 className="text-2xl font-bold">결제 요청이 완료되었습니다</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          아래 계좌로 입금해주시면 결제가 완료됩니다
+        </p>
+      </div>
+
+      {/* 입금 정보 */}
+      <Card className="border-2 border-blue-200 dark:border-blue-800">
+        <CardHeader className="bg-blue-50 dark:bg-blue-950">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-blue-600" />
+            <CardTitle className="text-lg">입금 계좌 정보</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6 space-y-4">
+          {/* 은행명 */}
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div>
+              <p className="text-sm text-gray-500">입금은행</p>
+              <p className="text-lg font-semibold">{virtualAccount.bankName}</p>
+            </div>
+          </div>
+
+          {/* 계좌번호 */}
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div>
+              <p className="text-sm text-gray-500">계좌번호</p>
+              <p className="text-lg font-semibold font-mono">{virtualAccount.accountNumber}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => copyToClipboard(virtualAccount.accountNumber, 'account')}
+            >
+              {copied === 'account' ? (
+                <Check className="h-4 w-4 text-green-500" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+
+          {/* 예금주 */}
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div>
+              <p className="text-sm text-gray-500">예금주</p>
+              <p className="text-lg font-semibold">{virtualAccount.holder}</p>
+            </div>
+          </div>
+
+          {/* 입금액 */}
+          <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div>
+              <p className="text-sm text-blue-600">입금 금액</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {formatNumber(payment.total_amount)}원
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => copyToClipboard(payment.total_amount.toString(), 'amount')}
+            >
+              {copied === 'amount' ? (
+                <Check className="h-4 w-4 text-green-500" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+
+          {/* 입금 기한 */}
+          <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 dark:bg-orange-950 p-3 rounded-lg">
+            <Clock className="h-4 w-4" />
+            <span>
+              입금 기한: <strong>{formatDate(virtualAccount.dueDate)}</strong>
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 캠페인 정보 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">결제 캠페인</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-600">캠페인명</span>
+              <span className="font-medium">{(payment.campaigns as any)?.title}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">제품명</span>
+              <span>{(payment.campaigns as any)?.product_name}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">결제 상태</span>
+              <Badge variant="outline" className="text-orange-600 border-orange-300">
+                입금 대기중
+              </Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 안내 사항 */}
+      <Card className="bg-gray-50 dark:bg-gray-900">
+        <CardContent className="pt-6">
+          <h3 className="font-medium mb-3">입금 시 유의사항</h3>
+          <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+            <li className="flex gap-2">
+              <span className="text-blue-500">•</span>
+              <span>입금자명은 업체명과 동일해야 합니다.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-blue-500">•</span>
+              <span>입금 금액이 다를 경우 자동 처리되지 않습니다.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-blue-500">•</span>
+              <span>입금 확인까지 영업일 기준 최대 1일이 소요됩니다.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-blue-500">•</span>
+              <span>입금 기한 내 미입금 시 결제 요청이 자동 취소됩니다.</span>
+            </li>
+          </ul>
+        </CardContent>
+      </Card>
+
+      {/* 버튼 */}
+      <div className="flex gap-3">
+        <Button
+          variant="outline"
+          onClick={() => router.push('/client/campaigns')}
+          className="flex-1"
+        >
+          <Home className="h-4 w-4 mr-2" />
+          캠페인 목록
+        </Button>
+        <Button
+          onClick={() => router.push(`/client/campaigns/${id}`)}
+          className="flex-1"
+        >
+          캠페인 상세보기
+          <ArrowRight className="h-4 w-4 ml-2" />
+        </Button>
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,315 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { CheckCircle, Clock, AlertCircle, Package, FileText, DollarSign } from 'lucide-react'
+import { Database } from '@/types/database'
+
+type Application = Database['public']['Tables']['applications']['Row'] & {
+  campaigns?: Database['public']['Tables']['campaigns']['Row']
+}
+type PurchaseVerification = Database['public']['Tables']['purchase_verifications']['Row']
+type ReviewSubmission = Database['public']['Tables']['review_submissions']['Row']
+
+export default function MyActivityDetailPage() {
+  const params = useParams()
+  const id = params.id as string
+  const router = useRouter()
+  const supabase = createClient()
+
+  const [application, setApplication] = useState<Application | null>(null)
+  const [verification, setVerification] = useState<PurchaseVerification | null>(null)
+  const [review, setReview] = useState<ReviewSubmission | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    if (id) {
+      fetchData()
+    }
+  }, [id])
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true)
+
+      // 신청 정보
+      const { data: appData } = await supabase
+        .from('applications')
+        .select(`
+          *,
+          campaigns (*)
+        `)
+        .eq('id', id)
+        .single()
+
+      setApplication(appData)
+
+      // 구매 인증
+      const { data: verData } = await supabase
+        .from('purchase_verifications')
+        .select('*')
+        .eq('application_id', id)
+        .single()
+
+      setVerification(verData)
+
+      // 리뷰 제출
+      const { data: reviewData } = await supabase
+        .from('review_submissions')
+        .select('*')
+        .eq('application_id', id)
+        .single()
+
+      setReview(reviewData)
+    } catch (err) {
+      console.error('Error fetching data:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isLoading) {
+    return <div>로딩 중...</div>
+  }
+
+  if (!application || !application.campaigns) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>활동 내역을 찾을 수 없습니다</AlertDescription>
+      </Alert>
+    )
+  }
+
+  const campaign = application.campaigns
+  const isSelected = application.status === 'selected'
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">{campaign.title}</h1>
+          <p className="text-xl text-gray-600 dark:text-gray-400 mt-1">
+            {campaign.product_name}
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => router.back()}>
+          목록으로
+        </Button>
+      </div>
+
+      {/* 진행 상태 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>진행 상태</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-8">
+              <div className="flex flex-col items-center">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  application.status === 'selected' ? 'bg-green-500 text-white' : 'bg-gray-200'
+                }`}>
+                  <CheckCircle className="w-6 h-6" />
+                </div>
+                <p className="text-sm mt-2">선정</p>
+              </div>
+
+              <div className="flex-1 h-1 bg-gray-200">
+                <div className={`h-full ${verification ? 'bg-green-500' : 'bg-gray-200'}`} />
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  verification ? 'bg-green-500 text-white' : 'bg-gray-200'
+                }`}>
+                  <Package className="w-6 h-6" />
+                </div>
+                <p className="text-sm mt-2">구매 인증</p>
+              </div>
+
+              <div className="flex-1 h-1 bg-gray-200">
+                <div className={`h-full ${review ? 'bg-green-500' : 'bg-gray-200'}`} />
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  review ? 'bg-green-500 text-white' : 'bg-gray-200'
+                }`}>
+                  <FileText className="w-6 h-6" />
+                </div>
+                <p className="text-sm mt-2">리뷰 작성</p>
+              </div>
+
+              <div className="flex-1 h-1 bg-gray-200">
+                <div className={`h-full ${review?.status === 'approved' ? 'bg-green-500' : 'bg-gray-200'}`} />
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  review?.status === 'approved' ? 'bg-green-500 text-white' : 'bg-gray-200'
+                }`}>
+                  <DollarSign className="w-6 h-6" />
+                </div>
+                <p className="text-sm mt-2">포인트 지급</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 신청 정보 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>신청 정보</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">플랫폼</span>
+            <Badge variant="outline">
+              {application.platform === 'naver' ? '네이버' : '쿠팡'}
+            </Badge>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">상태</span>
+            <Badge
+              variant={application.status === 'selected' ? 'default' : 'outline'}
+              className={
+                application.status === 'applied'
+                  ? 'bg-yellow-50 text-yellow-700'
+                  : application.status === 'selected'
+                  ? 'bg-green-500'
+                  : 'bg-gray-50'
+              }
+            >
+              {application.status === 'applied' && '검토대기'}
+              {application.status === 'selected' && '선정'}
+              {application.status === 'rejected' && '미선정'}
+            </Badge>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">신청일</span>
+            <span>{new Date(application.created_at).toLocaleString('ko-KR')}</span>
+          </div>
+
+          {application.selected_at && (
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500">선정일</span>
+              <span>{new Date(application.selected_at).toLocaleString('ko-KR')}</span>
+            </div>
+          )}
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">제품 가격</span>
+            <span className="font-medium">{campaign.product_price.toLocaleString()}원</span>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">리뷰 포인트</span>
+            <span className="font-medium text-green-600">
+              {application.platform === 'naver'
+                ? campaign.review_fee_naver.toLocaleString()
+                : campaign.review_fee_coupang.toLocaleString()
+              }원
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">리뷰 마감일</span>
+            <span>{new Date(campaign.review_deadline).toLocaleDateString('ko-KR')}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 액션 버튼 */}
+      {isSelected && (
+        <Card>
+          <CardHeader>
+            <CardTitle>다음 단계</CardTitle>
+            <CardDescription>아래 단계를 순서대로 진행해주세요</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {!verification && (
+              <Alert>
+                <Package className="h-4 w-4" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span>제품을 구매하고 구매 인증을 완료해주세요</span>
+                  <Link href={`/reviewer/my-activities/${id}/purchase-verify`}>
+                    <Button size="sm">구매 인증하기</Button>
+                  </Link>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {verification && verification.status === 'pending' && (
+              <Alert>
+                <Clock className="h-4 w-4" />
+                <AlertDescription>
+                  구매 인증이 검토 중입니다. 승인 후 리뷰를 작성할 수 있습니다.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {verification && verification.status === 'approved' && !review && (
+              <Alert>
+                <FileText className="h-4 w-4" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span>구매 인증이 완료되었습니다. 리뷰를 작성해주세요</span>
+                  <Link href={`/reviewer/my-activities/${id}/review-submit`}>
+                    <Button size="sm">리뷰 작성하기</Button>
+                  </Link>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {review && review.status === 'pending' && (
+              <Alert>
+                <Clock className="h-4 w-4" />
+                <AlertDescription>
+                  리뷰가 검수 중입니다. 승인 후 포인트가 지급됩니다.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {review && review.status === 'approved' && (
+              <Alert className="border-green-500">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-600">
+                  리뷰가 승인되었습니다. 포인트가 지급되었습니다!
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {review && review.status === 'revision_requested' && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  리뷰 수정이 요청되었습니다: {review.revision_comment}
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {application.status === 'rejected' && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            선정되지 않았습니다. 다른 캠페인에 도전해보세요!
+          </AlertDescription>
+        </Alert>
+      )}
+    </div>
+  )
+}

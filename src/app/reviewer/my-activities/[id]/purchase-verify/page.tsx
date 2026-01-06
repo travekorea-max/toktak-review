@@ -1,0 +1,267 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Upload, AlertCircle } from 'lucide-react'
+import { Database } from '@/types/database'
+
+type Application = Database['public']['Tables']['applications']['Row'] & {
+  campaigns?: Database['public']['Tables']['campaigns']['Row']
+}
+
+export default function PurchaseVerifyPage() {
+  const params = useParams()
+  const id = params.id as string
+  const router = useRouter()
+  const supabase = createClient()
+
+  const [application, setApplication] = useState<Application | null>(null)
+  const [orderNumber, setOrderNumber] = useState('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string>('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (id) {
+      fetchApplication()
+    }
+  }, [id])
+
+  const fetchApplication = async () => {
+    try {
+      const { data } = await supabase
+        .from('applications')
+        .select(`
+          *,
+          campaigns (*)
+        `)
+        .eq('id', id)
+        .single()
+
+      setApplication(data)
+    } catch (err) {
+      console.error('Error fetching application:', err)
+    }
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setImageFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!orderNumber.trim()) {
+      alert('주문번호를 입력해주세요')
+      return
+    }
+
+    if (!imageFile) {
+      alert('구매 인증 이미지를 업로드해주세요')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      setError(null)
+
+      // 이미지 업로드 (실제로는 Supabase Storage 사용)
+      // 여기서는 간단히 base64로 저장
+      const imageUrl = imagePreview // 실제로는 Storage URL
+
+      const { error: insertError } = await supabase
+        .from('purchase_verifications')
+        .insert({
+          application_id: id as string,
+          order_number: orderNumber,
+          image_url: imageUrl,
+          platform: application?.platform || 'naver',
+          status: 'pending',
+        })
+
+      if (insertError) throw insertError
+
+      alert('구매 인증이 제출되었습니다. 검토 후 승인됩니다.')
+      router.push(`/reviewer/my-activities/${id}`)
+    } catch (err) {
+      console.error('Error submitting verification:', err)
+      setError('구매 인증 제출 중 오류가 발생했습니다')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (!application || !application.campaigns) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>잘못된 접근입니다</AlertDescription>
+      </Alert>
+    )
+  }
+
+  const campaign = application.campaigns
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">구매 인증</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
+          {campaign.title}
+        </p>
+      </div>
+
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          <ul className="list-disc list-inside space-y-1 text-sm">
+            <li>제품을 구매한 후 주문번호와 구매 내역 스크린샷을 제출해주세요</li>
+            <li>구매 인증 승인 후 리뷰를 작성할 수 있습니다</li>
+            <li>허위 구매 인증 시 불이익을 받을 수 있습니다</li>
+          </ul>
+        </AlertDescription>
+      </Alert>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>캠페인 정보</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">제품명</span>
+            <span className="font-medium">{campaign.product_name}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">플랫폼</span>
+            <span className="font-medium">
+              {application.platform === 'naver' ? '네이버' : '쿠팡'}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">제품 가격</span>
+            <span className="font-medium">{campaign.product_price.toLocaleString()}원</span>
+          </div>
+          {application.platform === 'naver' && campaign.product_url_naver && (
+            <div>
+              <a
+                href={campaign.product_url_naver}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline text-sm"
+              >
+                제품 페이지 바로가기 →
+              </a>
+            </div>
+          )}
+          {application.platform === 'coupang' && campaign.product_url_coupang && (
+            <div>
+              <a
+                href={campaign.product_url_coupang}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline text-sm"
+              >
+                제품 페이지 바로가기 →
+              </a>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>구매 정보 입력</CardTitle>
+            <CardDescription>구매한 제품의 정보를 입력해주세요</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="orderNumber">주문번호 *</Label>
+              <Input
+                id="orderNumber"
+                placeholder="주문번호를 입력하세요"
+                value={orderNumber}
+                onChange={(e) => setOrderNumber(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="image">구매 내역 스크린샷 *</Label>
+              <div className="mt-2">
+                <input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="image"
+                  className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                >
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-full object-contain rounded-lg"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Upload className="w-12 h-12 mb-4 text-gray-400" />
+                      <p className="mb-2 text-sm text-gray-500">
+                        <span className="font-semibold">클릭하여 업로드</span> 또는 드래그 앤 드롭
+                      </p>
+                      <p className="text-xs text-gray-500">PNG, JPG (최대 10MB)</p>
+                    </div>
+                  )}
+                </label>
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                주문번호, 제품명, 구매일시가 포함된 스크린샷을 업로드해주세요
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            className="flex-1"
+          >
+            취소
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting || !orderNumber || !imageFile}
+            className="flex-1"
+          >
+            {isSubmitting ? '제출 중...' : '제출하기'}
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}
