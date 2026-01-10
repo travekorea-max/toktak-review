@@ -31,7 +31,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Coins
 } from 'lucide-react'
 import { Database } from '@/types/database'
 
@@ -476,6 +477,12 @@ export default function AdminCampaignDetailPage() {
                           <Badge className="bg-green-500">
                             <CheckCircle className="w-3 h-3 mr-1" />
                             선정
+                          </Badge>
+                        )}
+                        {app.status === 'settled' && (
+                          <Badge className="bg-[#4F46E5]">
+                            <Coins className="w-3 h-3 mr-1" />
+                            정산완료
                           </Badge>
                         )}
                         {app.status === 'rejected' && (

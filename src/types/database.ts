@@ -13,7 +13,7 @@ export type ShopPlatform = 'smartstore' | 'coupang' | 'own' | 'etc'
 export type ClientGrade = 'new' | 'regular' | 'premium'
 export type SelectionType = 'manual' | 'auto_fcfs' | 'auto_random'
 export type CampaignStatus = 'draft' | 'pending' | 'recruiting' | 'closed' | 'in_progress' | 'reviewing' | 'completed' | 'cancelled'
-export type ApplicationStatus = 'applied' | 'selected' | 'rejected' | 'cancelled'
+export type ApplicationStatus = 'applied' | 'selected' | 'settled' | 'rejected' | 'cancelled'
 export type VerificationStatus = 'pending' | 'approved' | 'rejected'
 export type ReviewStatus = 'pending' | 'ai_passed' | 'needs_review' | 'approved' | 'revision_requested' | 'rejected'
 export type PointTransactionType = 'earn' | 'withdraw' | 'cancel'
@@ -196,6 +196,7 @@ export interface Database {
           product_name: string
           product_description: string | null
           product_price: number
+          product_images?: string[] | null
           product_url_naver: string | null
           product_url_coupang: string | null
           platform: Platform
@@ -203,6 +204,11 @@ export interface Database {
           recruit_count_coupang: number
           review_fee_naver: number
           review_fee_coupang: number
+          product_payback_naver: number
+          product_payback_coupang: number
+          additional_point_naver: number
+          additional_point_coupang: number
+          is_empty_box: boolean
           recruit_start_date: string
           recruit_end_date: string
           announce_date: string
@@ -226,6 +232,7 @@ export interface Database {
           product_name: string
           product_description?: string | null
           product_price: number
+          product_images?: string[] | null
           product_url_naver?: string | null
           product_url_coupang?: string | null
           platform: Platform
@@ -233,6 +240,11 @@ export interface Database {
           recruit_count_coupang?: number
           review_fee_naver?: number
           review_fee_coupang?: number
+          product_payback_naver?: number
+          product_payback_coupang?: number
+          additional_point_naver?: number
+          additional_point_coupang?: number
+          is_empty_box?: boolean
           recruit_start_date: string
           recruit_end_date: string
           announce_date: string
@@ -256,6 +268,7 @@ export interface Database {
           product_name?: string
           product_description?: string | null
           product_price?: number
+          product_images?: string[] | null
           product_url_naver?: string | null
           product_url_coupang?: string | null
           platform?: Platform
@@ -263,6 +276,11 @@ export interface Database {
           recruit_count_coupang?: number
           review_fee_naver?: number
           review_fee_coupang?: number
+          product_payback_naver?: number
+          product_payback_coupang?: number
+          additional_point_naver?: number
+          additional_point_coupang?: number
+          is_empty_box?: boolean
           recruit_start_date?: string
           recruit_end_date?: string
           announce_date?: string
@@ -312,6 +330,7 @@ export interface Database {
           message: string | null
           status: ApplicationStatus
           selected_at: string | null
+          settled_at: string | null
           created_at: string
         }
         Insert: {
@@ -322,6 +341,7 @@ export interface Database {
           message?: string | null
           status?: ApplicationStatus
           selected_at?: string | null
+          settled_at?: string | null
           created_at?: string
         }
         Update: {
@@ -332,6 +352,7 @@ export interface Database {
           message?: string | null
           status?: ApplicationStatus
           selected_at?: string | null
+          settled_at?: string | null
           created_at?: string
         }
       }
@@ -341,6 +362,9 @@ export interface Database {
           application_id: string
           order_number: string
           image_url: string
+          wishlist_image_url: string | null
+          cart_image_url: string | null
+          purchase_image_url: string | null
           platform: Platform
           status: VerificationStatus
           verified_at: string | null
@@ -352,6 +376,9 @@ export interface Database {
           application_id: string
           order_number: string
           image_url: string
+          wishlist_image_url?: string | null
+          cart_image_url?: string | null
+          purchase_image_url?: string | null
           platform: Platform
           status?: VerificationStatus
           verified_at?: string | null
@@ -363,6 +390,9 @@ export interface Database {
           application_id?: string
           order_number?: string
           image_url?: string
+          wishlist_image_url?: string | null
+          cart_image_url?: string | null
+          purchase_image_url?: string | null
           platform?: Platform
           status?: VerificationStatus
           verified_at?: string | null

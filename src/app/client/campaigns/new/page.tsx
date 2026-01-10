@@ -16,7 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { CalendarIcon } from 'lucide-react'
+import { CalendarIcon, Info, Package, Coins } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 
@@ -32,6 +33,11 @@ const campaignSchema = z.object({
   recruit_count_coupang: z.number().min(0),
   review_fee_naver: z.number().min(0),
   review_fee_coupang: z.number().min(0),
+  product_payback_naver: z.number().min(0),
+  product_payback_coupang: z.number().min(0),
+  additional_point_naver: z.number().min(0),
+  additional_point_coupang: z.number().min(0),
+  is_empty_box: z.boolean(),
   selection_type: z.enum(['manual', 'auto_fcfs', 'auto_random']),
   min_text_length: z.number().min(100, '최소 100자 이상'),
   min_photo_count: z.number().min(1, '최소 1장 이상'),
@@ -70,6 +76,11 @@ export default function CampaignNewPage() {
       recruit_count_coupang: 10,
       review_fee_naver: 5000,
       review_fee_coupang: 5000,
+      product_payback_naver: 0,
+      product_payback_coupang: 0,
+      additional_point_naver: 0,
+      additional_point_coupang: 0,
+      is_empty_box: false,
       min_text_length: 300,
       min_photo_count: 3,
     },
@@ -77,6 +88,8 @@ export default function CampaignNewPage() {
 
   const platform = watch('platform')
   const selectionType = watch('selection_type')
+  const isEmptyBox = watch('is_empty_box')
+  const productPrice = watch('product_price')
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -179,6 +192,11 @@ export default function CampaignNewPage() {
           recruit_count_coupang: data.recruit_count_coupang,
           review_fee_naver: data.review_fee_naver,
           review_fee_coupang: data.review_fee_coupang,
+          product_payback_naver: data.product_payback_naver || data.product_price,
+          product_payback_coupang: data.product_payback_coupang || data.product_price,
+          additional_point_naver: data.additional_point_naver || 0,
+          additional_point_coupang: data.additional_point_coupang || 0,
+          is_empty_box: data.is_empty_box || false,
           recruit_start_date: recruitStartDate?.toISOString() || new Date().toISOString(),
           recruit_end_date: recruitEndDate?.toISOString() || new Date().toISOString(),
           announce_date: announceDate?.toISOString() || new Date().toISOString(),
@@ -397,6 +415,131 @@ export default function CampaignNewPage() {
                   </div>
                 </div>
               </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 포인트 설정 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Coins className="w-5 h-5" />
+              리뷰어 포인트 설정
+            </CardTitle>
+            <CardDescription>리뷰어에게 지급할 포인트를 설정하세요</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* 안내 */}
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+              <div className="flex gap-3">
+                <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-700 space-y-1">
+                  <p><strong>제품가격 페이백:</strong> 리뷰어가 제품 구매 후 돌려받는 금액입니다.</p>
+                  <p><strong>추가 포인트:</strong> 빈박스 제공 시 리뷰어에게 지급하는 추가 보상입니다.</p>
+                  <p className="text-blue-600 font-medium">예시: 2만원 제품 → 2만원 페이백 + 빈박스 시 1,000원 추가</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 빈박스 여부 */}
+            <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+              <Checkbox
+                id="is_empty_box"
+                checked={isEmptyBox}
+                onCheckedChange={(checked) => setValue('is_empty_box', checked as boolean)}
+              />
+              <div className="flex-1">
+                <Label htmlFor="is_empty_box" className="text-base font-medium cursor-pointer">
+                  빈박스 제공
+                </Label>
+                <p className="text-sm text-gray-500">
+                  제품 없이 빈박스만 제공하는 경우 체크하세요 (추가 포인트 지급 필요)
+                </p>
+              </div>
+              <Package className="w-5 h-5 text-gray-400" />
+            </div>
+
+            {/* 네이버 포인트 설정 */}
+            {(platform === 'naver' || platform === 'both') && (
+              <div className="p-4 border border-[#03C75A]/30 rounded-lg bg-[#03C75A]/5">
+                <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                  <span className="w-6 h-6 bg-[#03C75A] text-white text-xs font-bold rounded flex items-center justify-center">N</span>
+                  네이버 포인트
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="product_payback_naver">제품가격 페이백 (원)</Label>
+                    <Input
+                      id="product_payback_naver"
+                      type="number"
+                      placeholder={productPrice?.toString() || '제품 가격과 동일'}
+                      {...register('product_payback_naver', { valueAsNumber: true })}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">보통 제품 가격과 동일하게 설정</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="additional_point_naver">
+                      추가 포인트 (원)
+                      {isEmptyBox && <span className="text-red-500 ml-1">*</span>}
+                    </Label>
+                    <Input
+                      id="additional_point_naver"
+                      type="number"
+                      placeholder={isEmptyBox ? '1000' : '0'}
+                      {...register('additional_point_naver', { valueAsNumber: true })}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">빈박스 제공 시 최소 1,000원 권장</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 쿠팡 포인트 설정 */}
+            {(platform === 'coupang' || platform === 'both') && (
+              <div className="p-4 border border-[#E53935]/30 rounded-lg bg-[#E53935]/5">
+                <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                  <span className="w-6 h-6 bg-[#E53935] text-white text-xs font-bold rounded flex items-center justify-center">C</span>
+                  쿠팡 포인트
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="product_payback_coupang">제품가격 페이백 (원)</Label>
+                    <Input
+                      id="product_payback_coupang"
+                      type="number"
+                      placeholder={productPrice?.toString() || '제품 가격과 동일'}
+                      {...register('product_payback_coupang', { valueAsNumber: true })}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">보통 제품 가격과 동일하게 설정</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="additional_point_coupang">
+                      추가 포인트 (원)
+                      {isEmptyBox && <span className="text-red-500 ml-1">*</span>}
+                    </Label>
+                    <Input
+                      id="additional_point_coupang"
+                      type="number"
+                      placeholder={isEmptyBox ? '1000' : '0'}
+                      {...register('additional_point_coupang', { valueAsNumber: true })}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">빈박스 제공 시 최소 1,000원 권장</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 동시 진행 안내 */}
+            {platform === 'both' && (
+              <div className="bg-amber-50 border border-amber-100 rounded-lg p-4">
+                <div className="flex gap-3">
+                  <Info className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-amber-700">
+                    <p><strong>네이버+쿠팡 동시 진행 시 안내</strong></p>
+                    <p>제품은 1개만 제공되거나 빈박스만 제공될 수 있습니다. 플랫폼별로 포인트를 다르게 설정할 수 있습니다.</p>
+                  </div>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>

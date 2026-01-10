@@ -13,7 +13,8 @@ import {
   FileText,
   ArrowRight,
   Package,
-  ChevronRight
+  ChevronRight,
+  Coins
 } from 'lucide-react'
 import { Database } from '@/types/database'
 
@@ -25,6 +26,7 @@ const tabs = [
   { id: 'all', label: '전체' },
   { id: 'applied', label: '검토대기' },
   { id: 'selected', label: '선정' },
+  { id: 'settled', label: '정산완료' },
   { id: 'rejected', label: '미선정' },
 ]
 
@@ -71,6 +73,7 @@ export default function MyActivitiesPage() {
     const config: Record<string, { label: string; bg: string; text: string; icon: any }> = {
       applied: { label: '검토대기', bg: 'bg-amber-50', text: 'text-amber-600', icon: Clock },
       selected: { label: '선정', bg: 'bg-emerald-50', text: 'text-emerald-600', icon: CheckCircle },
+      settled: { label: '정산완료', bg: 'bg-[#EEF2FF]', text: 'text-[#4F46E5]', icon: Coins },
       rejected: { label: '미선정', bg: 'bg-gray-100', text: 'text-gray-500', icon: AlertCircle },
       cancelled: { label: '취소', bg: 'bg-red-50', text: 'text-red-600', icon: AlertCircle },
     }
@@ -89,6 +92,7 @@ export default function MyActivitiesPage() {
     all: applications.length,
     applied: applications.filter(a => a.status === 'applied').length,
     selected: applications.filter(a => a.status === 'selected').length,
+    settled: applications.filter(a => a.status === 'settled').length,
     rejected: applications.filter(a => a.status === 'rejected').length,
   }
 
@@ -98,8 +102,8 @@ export default function MyActivitiesPage() {
         <div className="max-w-5xl mx-auto px-6 py-8">
           <Skeleton className="h-8 w-48 mb-2" />
           <Skeleton className="h-5 w-64 mb-8" />
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {[1, 2, 3, 4].map((i) => (
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            {[1, 2, 3, 4, 5].map((i) => (
               <Skeleton key={i} className="h-24 rounded-xl" />
             ))}
           </div>
@@ -126,7 +130,7 @@ export default function MyActivitiesPage() {
         </div>
 
         {/* 통계 카드 */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           <div className="bg-white rounded-xl border border-gray-100 p-5">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-8 h-8 bg-[#EEF2FF] rounded-lg flex items-center justify-center">
@@ -155,6 +159,16 @@ export default function MyActivitiesPage() {
               <span className="text-sm text-gray-500">선정</span>
             </div>
             <p className="text-2xl font-bold text-emerald-600">{counts.selected}</p>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 bg-[#EEF2FF] rounded-lg flex items-center justify-center">
+                <Coins className="w-4 h-4 text-[#4F46E5]" />
+              </div>
+              <span className="text-sm text-gray-500">정산 완료</span>
+            </div>
+            <p className="text-2xl font-bold text-[#4F46E5]">{counts.settled}</p>
           </div>
 
           <div className="bg-white rounded-xl border border-gray-100 p-5">
@@ -225,6 +239,11 @@ export default function MyActivitiesPage() {
                         {app.status === 'selected' && (
                           <span className="text-xs text-emerald-600 font-medium">
                             구매 인증 필요
+                          </span>
+                        )}
+                        {app.status === 'settled' && (
+                          <span className="text-xs text-[#4F46E5] font-medium">
+                            포인트 지급 완료
                           </span>
                         )}
                       </div>

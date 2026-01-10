@@ -2,14 +2,20 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertCircle } from 'lucide-react'
+import {
+  ArrowLeft,
+  Wallet,
+  Building2,
+  Info,
+  Loader2,
+  CheckCircle2
+} from 'lucide-react'
 
 export default function WithdrawPage() {
   const router = useRouter()
@@ -32,17 +38,17 @@ export default function WithdrawPage() {
     const amountNum = Number(amount)
 
     if (amountNum < 10000) {
-      alert('최소 출금 금액은 10,000원입니다')
+      setError('최소 출금 금액은 10,000원입니다')
       return
     }
 
     if (!reviewerProfile || amountNum > reviewerProfile.point_balance) {
-      alert('보유 포인트가 부족합니다')
+      setError('보유 포인트가 부족합니다')
       return
     }
 
     if (!bankName || !bankAccount || !bankHolder) {
-      alert('계좌 정보를 모두 입력해주세요')
+      setError('계좌 정보를 모두 입력해주세요')
       return
     }
 
@@ -50,9 +56,8 @@ export default function WithdrawPage() {
       setIsSubmitting(true)
       setError(null)
 
-      // 출금 요청 등록
       const scheduledDate = new Date()
-      scheduledDate.setDate(scheduledDate.getDate() + 7) // 7일 후
+      scheduledDate.setDate(scheduledDate.getDate() + 7)
 
       const { error: insertError } = await supabase
         .from('withdrawal_requests')
@@ -70,7 +75,6 @@ export default function WithdrawPage() {
 
       if (insertError) throw insertError
 
-      // 포인트 차감
       const { error: pointError } = await supabase
         .from('point_transactions')
         .insert({
@@ -84,7 +88,6 @@ export default function WithdrawPage() {
 
       if (pointError) throw pointError
 
-      // 프로필 잔액 업데이트
       const { error: updateError } = await supabase
         .from('reviewer_profiles')
         .update({
@@ -95,7 +98,7 @@ export default function WithdrawPage() {
       if (updateError) throw updateError
 
       alert(`출금 신청이 완료되었습니다.\n입금 예정일: ${scheduledDate.toLocaleDateString('ko-KR')}`)
-      router.push('/points')
+      router.push('/reviewer/points')
     } catch (err) {
       console.error('Error:', err)
       setError('출금 신청 중 오류가 발생했습니다')
@@ -107,166 +110,204 @@ export default function WithdrawPage() {
   const quickAmounts = [10000, 30000, 50000, 100000]
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">출금 신청</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          보유 포인트를 출금하세요
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#FAFBFC]">
+      <div className="max-w-lg mx-auto px-6 py-8">
+        {/* 뒤로가기 */}
+        <Link href="/reviewer/points" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 mb-6">
+          <ArrowLeft className="w-4 h-4" />
+          포인트
+        </Link>
 
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          <ul className="list-disc list-inside space-y-1 text-sm">
-            <li>최소 출금 금액: 10,000원</li>
-            <li>출금 수수료: 3.3% (원천징수)</li>
-            <li>입금일: 신청일로부터 7영업일 이내</li>
-            <li>계좌정보는 정확하게 입력해주세요</li>
-          </ul>
-        </AlertDescription>
-      </Alert>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>보유 포인트</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-4xl font-bold">
-            {reviewerProfile?.point_balance.toLocaleString() || 0}
-            <span className="text-lg text-gray-500 ml-2">원</span>
+        {/* 헤더 */}
+        <div className="mb-8">
+          <h1 className="text-xl font-bold text-gray-900">출금 신청</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            보유 포인트를 계좌로 출금하세요
           </p>
-        </CardContent>
-      </Card>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>출금 금액</CardTitle>
-            <CardDescription>출금할 금액을 입력하세요</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="amount">출금 금액 *</Label>
-              <Input
-                id="amount"
-                type="number"
-                placeholder="10000"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                min="10000"
-                step="1000"
-                required
-              />
-            </div>
-
-            <div className="flex gap-2">
-              {quickAmounts.map((amt) => (
-                <Button
-                  key={amt}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setAmount(amt.toString())}
-                  disabled={!reviewerProfile || amt > reviewerProfile.point_balance}
-                >
-                  {(amt / 10000).toFixed(0)}만원
-                </Button>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setAmount((reviewerProfile?.point_balance || 0).toString())}
-              >
-                전액
-              </Button>
-            </div>
-
-            {amount && Number(amount) >= 10000 && (
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>출금 금액</span>
-                  <span className="font-medium">{Number(amount).toLocaleString()}원</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>수수료 (3.3%)</span>
-                  <span className="font-medium text-red-600">-{fee.toLocaleString()}원</span>
-                </div>
-                <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                  <span>실수령액</span>
-                  <span className="text-green-600">{netAmount.toLocaleString()}원</span>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>계좌 정보</CardTitle>
-            <CardDescription>입금받을 계좌 정보를 입력하세요</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="bankName">은행명 *</Label>
-              <Input
-                id="bankName"
-                placeholder="예) 국민은행"
-                value={bankName}
-                onChange={(e) => setBankName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="bankAccount">계좌번호 *</Label>
-              <Input
-                id="bankAccount"
-                placeholder="- 없이 입력"
-                value={bankAccount}
-                onChange={(e) => setBankAccount(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="bankHolder">예금주 *</Label>
-              <Input
-                id="bankHolder"
-                placeholder="예금주명"
-                value={bankHolder}
-                onChange={(e) => setBankHolder(e.target.value)}
-                required
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-            className="flex-1"
-          >
-            취소
-          </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting || !amount || Number(amount) < 10000}
-            className="flex-1"
-          >
-            {isSubmitting ? '신청 중...' : '출금 신청'}
-          </Button>
         </div>
-      </form>
+
+        {/* 안내사항 */}
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+          <div className="flex gap-3">
+            <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+            <ul className="text-sm text-blue-700 space-y-1">
+              <li>최소 출금 금액: 10,000원</li>
+              <li>출금 수수료: 3.3% (원천징수)</li>
+              <li>입금일: 신청일로부터 7영업일 이내</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* 보유 포인트 */}
+        <div className="bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] rounded-xl p-5 mb-6 text-white">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+              <Wallet className="w-4 h-4" />
+            </div>
+            <span className="text-white/80 text-sm">보유 포인트</span>
+          </div>
+          <p className="text-2xl font-bold">
+            {(reviewerProfile?.point_balance || 0).toLocaleString()}P
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 출금 금액 */}
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <h2 className="font-semibold text-gray-900 mb-4">출금 금액</h2>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="amount" className="text-sm font-medium text-gray-700">
+                  금액 입력
+                </Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  placeholder="10,000"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  min="10000"
+                  step="1000"
+                  className="h-11 bg-white border-gray-200"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {quickAmounts.map((amt) => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => setAmount(amt.toString())}
+                    disabled={!reviewerProfile || amt > reviewerProfile.point_balance}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      amount === amt.toString()
+                        ? 'bg-[#4F46E5] text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed'
+                    }`}
+                  >
+                    {(amt / 10000).toFixed(0)}만원
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setAmount((reviewerProfile?.point_balance || 0).toString())}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    amount === (reviewerProfile?.point_balance || 0).toString()
+                      ? 'bg-[#4F46E5] text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  전액
+                </button>
+              </div>
+
+              {amount && Number(amount) >= 10000 && (
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2 mt-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">출금 금액</span>
+                    <span className="font-medium text-gray-900">{Number(amount).toLocaleString()}P</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">수수료 (3.3%)</span>
+                    <span className="font-medium text-red-500">-{fee.toLocaleString()}P</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-gray-200">
+                    <span className="font-medium text-gray-900">실수령액</span>
+                    <span className="font-bold text-[#4F46E5]">{netAmount.toLocaleString()}원</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 계좌 정보 */}
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Building2 className="w-5 h-5 text-gray-400" />
+              <h2 className="font-semibold text-gray-900">계좌 정보</h2>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="bankName" className="text-sm font-medium text-gray-700">
+                  은행명 <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="bankName"
+                  placeholder="예) 국민은행"
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  className="h-11 bg-white border-gray-200"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bankAccount" className="text-sm font-medium text-gray-700">
+                  계좌번호 <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="bankAccount"
+                  placeholder="- 없이 입력"
+                  value={bankAccount}
+                  onChange={(e) => setBankAccount(e.target.value)}
+                  className="h-11 bg-white border-gray-200"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bankHolder" className="text-sm font-medium text-gray-700">
+                  예금주 <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="bankHolder"
+                  placeholder="예금주명"
+                  value={bankHolder}
+                  onChange={(e) => setBankHolder(e.target.value)}
+                  className="h-11 bg-white border-gray-200"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 에러 메시지 */}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-100 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {/* 버튼 */}
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              className="flex-1 h-11"
+            >
+              취소
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting || !amount || Number(amount) < 10000}
+              className="flex-1 h-11 bg-[#4F46E5] hover:bg-[#4338CA]"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  신청 중...
+                </>
+              ) : (
+                '출금 신청'
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

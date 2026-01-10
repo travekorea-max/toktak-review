@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
-import { CheckCircle, XCircle, Star } from 'lucide-react'
+import { CheckCircle, XCircle, Star, Coins } from 'lucide-react'
 import { Database } from '@/types/database'
 
 type Campaign = Database['public']['Tables']['campaigns']['Row']
@@ -214,6 +214,64 @@ export default function ApplicantsManagementPage() {
     }
   }
 
+  const handleIndividualSettle = async (id: string) => {
+    if (!confirm('이 지원자의 정산을 완료 처리하시겠습니까?\n포인트가 지급됩니다.')) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({
+          status: 'settled',
+          settled_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+
+      if (error) throw error
+
+      alert('정산 처리가 완료되었습니다')
+      fetchApplications()
+    } catch (err) {
+      console.error('Error settling:', err)
+      alert('정산 처리 중 오류가 발생했습니다')
+    }
+  }
+
+  const handleBulkSettle = async () => {
+    if (selectedIds.length === 0) {
+      alert('선택된 지원자가 없습니다')
+      return
+    }
+
+    if (!confirm(`${selectedIds.length}명의 정산을 완료 처리하시겠습니까?\n포인트가 지급됩니다.`)) {
+      return
+    }
+
+    try {
+      setIsProcessing(true)
+
+      const { error } = await supabase
+        .from('applications')
+        .update({
+          status: 'settled',
+          settled_at: new Date().toISOString(),
+        })
+        .in('id', selectedIds)
+
+      if (error) throw error
+
+      alert('정산 처리가 완료되었습니다')
+      setSelectedIds([])
+      fetchApplications()
+    } catch (err) {
+      console.error('Error settling:', err)
+      alert('정산 처리 중 오류가 발생했습니다')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
   const getFilteredApplications = () => {
     if (activeTab === 'all') return applications
     return applications.filter(app => app.status === activeTab)
@@ -235,7 +293,7 @@ export default function ApplicantsManagementPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-500">전체 지원자</CardTitle>
@@ -260,6 +318,14 @@ export default function ApplicantsManagementPage() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
+            <CardTitle className="text-sm text-gray-500">정산완료</CardTitle>
+            <p className="text-3xl font-bold text-[#4F46E5]">
+              {applications.filter(a => a.status === 'settled').length}명
+            </p>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-500">미선정</CardTitle>
             <p className="text-3xl font-bold text-gray-600">
               {applications.filter(a => a.status === 'rejected').length}명
@@ -279,6 +345,9 @@ export default function ApplicantsManagementPage() {
           <TabsTrigger value="selected">
             선정 ({applications.filter(a => a.status === 'selected').length})
           </TabsTrigger>
+          <TabsTrigger value="settled">
+            정산완료 ({applications.filter(a => a.status === 'settled').length})
+          </TabsTrigger>
           <TabsTrigger value="rejected">
             미선정 ({applications.filter(a => a.status === 'rejected').length})
           </TabsTrigger>
@@ -297,6 +366,15 @@ export default function ApplicantsManagementPage() {
                   >
                     <CheckCircle className="w-4 h-4 mr-1" />
                     선정
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-[#4F46E5] hover:bg-[#4338CA]"
+                    onClick={handleBulkSettle}
+                    disabled={isProcessing}
+                  >
+                    <Coins className="w-4 h-4 mr-1" />
+                    정산처리
                   </Button>
                   <Button
                     size="sm"
@@ -376,6 +454,9 @@ export default function ApplicantsManagementPage() {
                           {app.status === 'selected' && (
                             <Badge className="bg-green-500">선정</Badge>
                           )}
+                          {app.status === 'settled' && (
+                            <Badge className="bg-[#4F46E5]">정산완료</Badge>
+                          )}
                           {app.status === 'rejected' && (
                             <Badge variant="outline">미선정</Badge>
                           )}
@@ -398,6 +479,16 @@ export default function ApplicantsManagementPage() {
                                 거부
                               </Button>
                             </div>
+                          )}
+                          {app.status === 'selected' && (
+                            <Button
+                              size="sm"
+                              className="bg-[#4F46E5] hover:bg-[#4338CA]"
+                              onClick={() => handleIndividualSettle(app.id)}
+                            >
+                              <Coins className="w-4 h-4 mr-1" />
+                              정산처리
+                            </Button>
                           )}
                         </TableCell>
                       </TableRow>
