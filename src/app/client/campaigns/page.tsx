@@ -107,7 +107,7 @@ export default function ClientCampaignsPage() {
             등록한 캠페인을 관리하세요
           </p>
         </div>
-        <Button onClick={() => router.push('/campaigns/new')}>
+        <Button onClick={() => router.push('/client/campaigns/new')}>
           <Plus className="w-4 h-4 mr-2" />
           새 캠페인 등록
         </Button>
@@ -172,7 +172,7 @@ export default function ClientCampaignsPage() {
               </p>
               {campaigns.length === 0 && (
                 <Button
-                  onClick={() => router.push('/campaigns/new')}
+                  onClick={() => router.push('/client/campaigns/new')}
                   className="mt-4"
                 >
                   <Plus className="w-4 h-4 mr-2" />

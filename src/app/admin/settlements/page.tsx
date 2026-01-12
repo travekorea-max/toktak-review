@@ -3,19 +3,31 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { CheckCircle, XCircle, Search, DollarSign, Users, Clock, CreditCard } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  CheckCircle,
+  XCircle,
+  Search,
+  DollarSign,
+  Users,
+  Clock,
+  CreditCard,
+  X,
+} from 'lucide-react'
 import { Database } from '@/types/database'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 
 type WithdrawalRequest = Database['public']['Tables']['withdrawal_requests']['Row']
+
+const tabs = [
+  { id: 'pending', label: '대기중' },
+  { id: 'approved', label: '승인됨' },
+  { id: 'completed', label: '완료' },
+  { id: 'all', label: '전체' },
+]
 
 export default function SettlementsPage() {
   const supabase = createClient()
@@ -140,257 +152,269 @@ export default function SettlementsPage() {
       .reduce((sum, w) => sum + w.net_amount, 0),
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700">대기중</Badge>
-      case 'approved':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700">승인됨</Badge>
-      case 'completed':
-        return <Badge className="bg-green-500">완료</Badge>
-      case 'rejected':
-        return <Badge variant="outline" className="text-red-600">거절</Badge>
-      default:
-        return <Badge variant="outline">{status}</Badge>
-    }
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#FAFBFC]">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-5 w-64 mb-8" />
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
+          </div>
+          <Skeleton className="h-96 rounded-xl" />
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">정산 관리</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            리뷰어 출금 요청을 관리하세요
-          </p>
-        </div>
-        <Link href="/admin/settlements/reviewers">
-          <Button variant="outline">
-            <Users className="w-4 h-4 mr-2" />
-            리뷰어별 정산 현황
-          </Button>
-        </Link>
-      </div>
-
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-1 text-xs">
-              <Clock className="w-3 h-3" />
-              대기중 출금
-            </CardDescription>
-            <CardTitle className="text-3xl text-yellow-600">{stats.pending}건</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-500">
-              {stats.pendingAmount.toLocaleString()}원 예정
+    <div className="min-h-screen bg-[#FAFBFC]">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* 헤더 */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">정산 관리</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              리뷰어 출금 요청을 관리하세요
             </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-1 text-xs">
-              <CheckCircle className="w-3 h-3" />
-              승인됨
-            </CardDescription>
-            <CardTitle className="text-3xl text-blue-600">{stats.approved}건</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-1 text-xs">
-              <CreditCard className="w-3 h-3" />
-              완료된 출금
-            </CardDescription>
-            <CardTitle className="text-3xl text-green-600">{stats.completed}건</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-500">
-              총 {stats.totalAmount.toLocaleString()}원
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-1 text-xs">
-              <DollarSign className="w-3 h-3" />
-              전체 요청
-            </CardDescription>
-            <CardTitle className="text-3xl">{stats.total}건</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-
-      {/* 검색 */}
-      <div className="flex gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="예금주명 또는 계좌번호 검색..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+          </div>
+          <Link href="/admin/settlements/reviewers">
+            <Button variant="outline">
+              <Users className="w-4 h-4 mr-2" />
+              리뷰어별 정산 현황
+            </Button>
+          </Link>
         </div>
-      </div>
 
-      {/* 탭 & 테이블 */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="pending">
-            대기중 ({stats.pending})
-          </TabsTrigger>
-          <TabsTrigger value="approved">
-            승인됨 ({stats.approved})
-          </TabsTrigger>
-          <TabsTrigger value="completed">
-            완료 ({stats.completed})
-          </TabsTrigger>
-          <TabsTrigger value="all">
-            전체 ({stats.total})
-          </TabsTrigger>
-        </TabsList>
+        {/* 통계 카드 */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
+                <Clock className="w-4 h-4 text-amber-500" />
+              </div>
+              <span className="text-sm text-gray-500">대기중 출금</span>
+            </div>
+            <p className="text-2xl font-bold text-amber-600">{stats.pending}건</p>
+            <p className="text-xs text-gray-500 mt-1">{stats.pendingAmount.toLocaleString()}원 예정</p>
+          </div>
 
-        <TabsContent value={activeTab}>
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>요청일</TableHead>
-                    <TableHead>예금주</TableHead>
-                    <TableHead>은행/계좌</TableHead>
-                    <TableHead className="text-right">출금액</TableHead>
-                    <TableHead className="text-right">수수료</TableHead>
-                    <TableHead className="text-right">실지급액</TableHead>
-                    <TableHead>예정일</TableHead>
-                    <TableHead>상태</TableHead>
-                    <TableHead className="text-right">작업</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center py-12">
-                        로딩 중...
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredWithdrawals.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center py-12 text-gray-500">
-                        출금 요청이 없습니다
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredWithdrawals.map((withdrawal) => (
-                      <TableRow key={withdrawal.id}>
-                        <TableCell>
-                          {format(new Date(withdrawal.created_at), 'MM/dd HH:mm', { locale: ko })}
-                        </TableCell>
-                        <TableCell className="font-medium">{withdrawal.bank_holder}</TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div>{withdrawal.bank_name}</div>
-                            <div className="text-gray-500">{withdrawal.bank_account}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {withdrawal.amount.toLocaleString()}원
-                        </TableCell>
-                        <TableCell className="text-right text-gray-500">
-                          -{withdrawal.fee.toLocaleString()}원
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {withdrawal.net_amount.toLocaleString()}원
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(withdrawal.scheduled_date), 'MM/dd', { locale: ko })}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(withdrawal.status)}</TableCell>
-                        <TableCell className="text-right">
-                          {withdrawal.status === 'pending' && (
-                            <div className="flex gap-1 justify-end">
-                              <Button
-                                size="sm"
-                                onClick={() => handleAction(withdrawal, 'approve')}
-                              >
-                                승인
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleAction(withdrawal, 'reject')}
-                              >
-                                거절
-                              </Button>
-                            </div>
-                          )}
-                          {withdrawal.status === 'approved' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleAction(withdrawal, 'complete')}
-                            >
-                              완료처리
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                <CheckCircle className="w-4 h-4 text-blue-500" />
+              </div>
+              <span className="text-sm text-gray-500">승인됨</span>
+            </div>
+            <p className="text-2xl font-bold text-blue-600">{stats.approved}건</p>
+          </div>
 
-      {/* 확인 다이얼로그 */}
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {confirmAction === 'approve' && '출금 승인'}
-              {confirmAction === 'reject' && '출금 거절'}
-              {confirmAction === 'complete' && '출금 완료 처리'}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedWithdrawal && (
-                <div className="space-y-2 mt-4">
-                  <div className="flex justify-between">
-                    <span>예금주:</span>
-                    <span className="font-medium">{selectedWithdrawal.bank_holder}</span>
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
+                <CreditCard className="w-4 h-4 text-emerald-500" />
+              </div>
+              <span className="text-sm text-gray-500">완료된 출금</span>
+            </div>
+            <p className="text-2xl font-bold text-emerald-600">{stats.completed}건</p>
+            <p className="text-xs text-gray-500 mt-1">총 {stats.totalAmount.toLocaleString()}원</p>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-gray-500" />
+              </div>
+              <span className="text-sm text-gray-500">전체 요청</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.total}건</p>
+          </div>
+        </div>
+
+        {/* 검색 */}
+        <div className="mb-6">
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="예금주명 또는 계좌번호 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {/* 탭 */}
+        <div className="flex gap-2 mb-6">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-[#4F46E5] text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {tab.label}
+              <span className={`ml-1.5 ${activeTab === tab.id ? 'text-white/80' : 'text-gray-400'}`}>
+                {tab.id === 'all' ? stats.total :
+                 tab.id === 'pending' ? stats.pending :
+                 tab.id === 'approved' ? stats.approved : stats.completed}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* 테이블 */}
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          {/* 헤더 */}
+          <div className="grid grid-cols-12 gap-4 px-5 py-3 bg-gray-50 text-xs font-medium text-gray-500 border-b border-gray-100">
+            <div className="col-span-1">요청일</div>
+            <div className="col-span-2">예금주</div>
+            <div className="col-span-2">은행/계좌</div>
+            <div className="col-span-1 text-right">출금액</div>
+            <div className="col-span-1 text-right">수수료</div>
+            <div className="col-span-1 text-right">실지급액</div>
+            <div className="col-span-1">예정일</div>
+            <div className="col-span-1">상태</div>
+            <div className="col-span-2 text-right">작업</div>
+          </div>
+
+          {/* 목록 */}
+          {filteredWithdrawals.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <DollarSign className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-sm text-gray-500">출금 요청이 없습니다</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {filteredWithdrawals.map((withdrawal) => (
+                <div key={withdrawal.id} className="grid grid-cols-12 gap-4 px-5 py-4 items-center hover:bg-gray-50 transition-colors">
+                  <div className="col-span-1 text-xs text-gray-500">
+                    {format(new Date(withdrawal.created_at), 'MM/dd HH:mm', { locale: ko })}
                   </div>
-                  <div className="flex justify-between">
-                    <span>계좌:</span>
-                    <span>{selectedWithdrawal.bank_name} {selectedWithdrawal.bank_account}</span>
+                  <div className="col-span-2 font-medium text-gray-900">{withdrawal.bank_holder}</div>
+                  <div className="col-span-2 text-sm">
+                    <div className="text-gray-900">{withdrawal.bank_name}</div>
+                    <div className="text-gray-500">{withdrawal.bank_account}</div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>실지급액:</span>
-                    <span className="font-bold text-lg">{selectedWithdrawal.net_amount.toLocaleString()}원</span>
+                  <div className="col-span-1 text-right text-sm text-gray-900">
+                    {withdrawal.amount.toLocaleString()}원
+                  </div>
+                  <div className="col-span-1 text-right text-sm text-gray-500">
+                    -{withdrawal.fee.toLocaleString()}원
+                  </div>
+                  <div className="col-span-1 text-right text-sm font-medium text-gray-900">
+                    {withdrawal.net_amount.toLocaleString()}원
+                  </div>
+                  <div className="col-span-1 text-xs text-gray-500">
+                    {format(new Date(withdrawal.scheduled_date), 'MM/dd', { locale: ko })}
+                  </div>
+                  <div className="col-span-1">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      withdrawal.status === 'pending' ? 'bg-amber-50 text-amber-600' :
+                      withdrawal.status === 'approved' ? 'bg-blue-50 text-blue-600' :
+                      withdrawal.status === 'completed' ? 'bg-emerald-50 text-emerald-600' :
+                      'bg-red-50 text-red-600'
+                    }`}>
+                      {withdrawal.status === 'pending' && '대기중'}
+                      {withdrawal.status === 'approved' && '승인됨'}
+                      {withdrawal.status === 'completed' && '완료'}
+                      {withdrawal.status === 'rejected' && '거절'}
+                    </span>
+                  </div>
+                  <div className="col-span-2 flex justify-end gap-1">
+                    {withdrawal.status === 'pending' && (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => handleAction(withdrawal, 'approve')}
+                        >
+                          승인
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleAction(withdrawal, 'reject')}
+                        >
+                          거절
+                        </Button>
+                      </>
+                    )}
+                    {withdrawal.status === 'approved' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAction(withdrawal, 'complete')}
+                      >
+                        완료처리
+                      </Button>
+                    )}
                   </div>
                 </div>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
-              취소
-            </Button>
-            <Button
-              onClick={processAction}
-              disabled={isProcessing}
-              variant={confirmAction === 'reject' ? 'destructive' : 'default'}
-            >
-              {isProcessing ? '처리 중...' : '확인'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 확인 다이얼로그 */}
+      {showConfirmDialog && selectedWithdrawal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {confirmAction === 'approve' && '출금 승인'}
+                {confirmAction === 'reject' && '출금 거절'}
+                {confirmAction === 'complete' && '출금 완료 처리'}
+              </h2>
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">예금주</span>
+                  <span className="font-medium text-gray-900">{selectedWithdrawal.bank_holder}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">계좌</span>
+                  <span>{selectedWithdrawal.bank_name} {selectedWithdrawal.bank_account}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">실지급액</span>
+                  <span className="font-bold text-lg text-gray-900">{selectedWithdrawal.net_amount.toLocaleString()}원</span>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-100 flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowConfirmDialog(false)}
+              >
+                취소
+              </Button>
+              <Button
+                className={`flex-1 ${confirmAction === 'reject' ? 'bg-red-500 hover:bg-red-600' : 'bg-[#4F46E5] hover:bg-[#4338CA]'}`}
+                onClick={processAction}
+                disabled={isProcessing}
+              >
+                {isProcessing ? '처리 중...' : '확인'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

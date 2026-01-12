@@ -4,13 +4,11 @@ import { useEffect, useState, use } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   CheckCircle2,
-  Loader2,
   Home,
   ArrowRight,
+  AlertCircle,
 } from 'lucide-react'
 
 export default function PaymentSuccessPage({
@@ -27,7 +25,6 @@ export default function PaymentSuccessPage({
   const [error, setError] = useState<string | null>(null)
   const [paymentInfo, setPaymentInfo] = useState<any>(null)
 
-  // URL 파라미터에서 결제 정보 추출
   const paymentKey = searchParams.get('paymentKey')
   const orderId = searchParams.get('orderId')
   const amount = searchParams.get('amount')
@@ -43,7 +40,6 @@ export default function PaymentSuccessPage({
 
   const confirmPayment = async () => {
     try {
-      // 서버에서 결제 승인 처리
       const response = await fetch('/api/payments/toss/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,113 +68,116 @@ export default function PaymentSuccessPage({
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-        <p className="text-lg">결제를 확인하고 있습니다...</p>
+      <div className="min-h-screen bg-[#FAFBFC] flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 border-3 border-[#4F46E5] border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-lg text-gray-900">결제를 확인하고 있습니다...</p>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={() => router.push('/client/campaigns')}
-            className="flex-1"
-          >
-            <Home className="h-4 w-4 mr-2" />
-            캠페인 목록
-          </Button>
-          <Button
-            onClick={() => router.push(`/client/campaigns/${id}/payment`)}
-            className="flex-1"
-          >
-            다시 시도
-          </Button>
+      <div className="min-h-screen bg-[#FAFBFC]">
+        <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+          <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl flex items-center gap-2">
+            <AlertCircle className="w-5 h-5" />
+            <p className="text-sm">{error}</p>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => router.push('/client/campaigns')}
+              className="flex-1"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              캠페인 목록
+            </Button>
+            <Button
+              onClick={() => router.push(`/client/campaigns/${id}/payment`)}
+              className="flex-1 bg-[#4F46E5] hover:bg-[#4338CA]"
+            >
+              다시 시도
+            </Button>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* 성공 헤더 */}
-      <div className="text-center py-8">
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full mb-4">
-          <CheckCircle2 className="h-10 w-10 text-green-600" />
+    <div className="min-h-screen bg-[#FAFBFC]">
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        {/* 성공 헤더 */}
+        <div className="text-center py-8">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-100 rounded-full mb-4">
+            <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">결제가 완료되었습니다!</h1>
+          <p className="text-sm text-gray-500 mt-2">
+            캠페인이 곧 활성화됩니다
+          </p>
         </div>
-        <h1 className="text-2xl font-bold">결제가 완료되었습니다!</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
-          캠페인이 곧 활성화됩니다
-        </p>
-      </div>
 
-      {/* 결제 정보 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>결제 정보</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-between">
-            <span className="text-gray-600">주문번호</span>
-            <span className="font-mono text-sm">{orderId}</span>
+        {/* 결제 정보 */}
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-50">
+            <h2 className="font-semibold text-gray-900">결제 정보</h2>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">결제 금액</span>
-            <span className="font-bold text-lg text-blue-600">
-              {Number(amount).toLocaleString()}원
-            </span>
-          </div>
-          {paymentInfo?.payment?.method && (
+          <div className="p-5 space-y-3">
             <div className="flex justify-between">
-              <span className="text-gray-600">결제 수단</span>
-              <span>{paymentInfo.payment.method}</span>
+              <span className="text-sm text-gray-600">주문번호</span>
+              <span className="text-sm font-mono text-gray-900">{orderId}</span>
             </div>
-          )}
-          {paymentInfo?.payment?.approvedAt && (
             <div className="flex justify-between">
-              <span className="text-gray-600">결제 일시</span>
-              <span>
-                {new Date(paymentInfo.payment.approvedAt).toLocaleString('ko-KR')}
+              <span className="text-sm text-gray-600">결제 금액</span>
+              <span className="text-lg font-bold text-[#4F46E5]">
+                {Number(amount).toLocaleString()}원
               </span>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 안내 */}
-      <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200">
-        <CardContent className="pt-6">
-          <div className="space-y-2 text-sm">
-            <p>• 결제가 완료되어 캠페인이 자동으로 활성화됩니다.</p>
-            <p>• 세금계산서는 익월 초에 등록하신 이메일로 발송됩니다.</p>
-            <p>• 문의사항은 고객센터로 연락해주세요.</p>
+            {paymentInfo?.payment?.method && (
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">결제 수단</span>
+                <span className="text-sm text-gray-900">{paymentInfo.payment.method}</span>
+              </div>
+            )}
+            {paymentInfo?.payment?.approvedAt && (
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">결제 일시</span>
+                <span className="text-sm text-gray-900">
+                  {new Date(paymentInfo.payment.approvedAt).toLocaleString('ko-KR')}
+                </span>
+              </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* 버튼 */}
-      <div className="flex gap-3">
-        <Button
-          variant="outline"
-          onClick={() => router.push('/client/campaigns')}
-          className="flex-1"
-        >
-          <Home className="h-4 w-4 mr-2" />
-          캠페인 목록
-        </Button>
-        <Button
-          onClick={() => router.push(`/client/campaigns/${id}`)}
-          className="flex-1"
-        >
-          캠페인 상세보기
-          <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
+        {/* 안내 */}
+        <div className="bg-[#EEF2FF] rounded-xl p-5">
+          <div className="space-y-2 text-sm text-[#4F46E5]">
+            <p>결제가 완료되어 캠페인이 자동으로 활성화됩니다.</p>
+            <p>세금계산서는 익월 초에 등록하신 이메일로 발송됩니다.</p>
+            <p>문의사항은 고객센터로 연락해주세요.</p>
+          </div>
+        </div>
+
+        {/* 버튼 */}
+        <div className="flex gap-3 pb-6">
+          <Button
+            variant="outline"
+            onClick={() => router.push('/client/campaigns')}
+            className="flex-1"
+          >
+            <Home className="w-4 h-4 mr-2" />
+            캠페인 목록
+          </Button>
+          <Button
+            onClick={() => router.push(`/client/campaigns/${id}`)}
+            className="flex-1 bg-[#4F46E5] hover:bg-[#4338CA]"
+          >
+            캠페인 상세보기
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
       </div>
     </div>
   )

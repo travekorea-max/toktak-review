@@ -3,12 +3,17 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ArrowLeft, Search, DollarSign, TrendingUp, Wallet } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  ArrowLeft,
+  Search,
+  DollarSign,
+  TrendingUp,
+  Wallet,
+  Users,
+} from 'lucide-react'
 import { Database } from '@/types/database'
 
 type ReviewerProfile = Database['public']['Tables']['reviewer_profiles']['Row']
@@ -117,192 +122,208 @@ export default function ReviewerSettlementsPage() {
     totalWithdrawn: reviewers.reduce((sum, r) => sum + r.total_withdrawn, 0),
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#FAFBFC]">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-5 w-64 mb-8" />
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
+          </div>
+          <Skeleton className="h-96 rounded-xl" />
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/admin/settlements">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+    <div className="min-h-screen bg-[#FAFBFC]">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* 뒤로가기 */}
+        <Link
+          href="/admin/settlements"
+          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          정산 관리로 돌아가기
         </Link>
-        <div>
-          <h1 className="text-3xl font-bold">리뷰어별 정산 현황</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+
+        {/* 헤더 */}
+        <div className="mb-8">
+          <h1 className="text-xl font-bold text-gray-900">리뷰어별 정산 현황</h1>
+          <p className="text-sm text-gray-500 mt-1">
             각 리뷰어의 포인트 현황을 확인하세요
           </p>
         </div>
-      </div>
 
-      {/* 전체 통계 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-1 text-xs">
-              <TrendingUp className="w-3 h-3" />
-              전체 리뷰어
-            </CardDescription>
-            <CardTitle className="text-3xl">{stats.totalReviewers}명</CardTitle>
-          </CardHeader>
-        </Card>
+        {/* 전체 통계 */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 bg-[#EEF2FF] rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-[#4F46E5]" />
+              </div>
+              <span className="text-sm text-gray-500">전체 리뷰어</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.totalReviewers}명</p>
+          </div>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-1 text-xs">
-              <Wallet className="w-3 h-3" />
-              총 보유 포인트
-            </CardDescription>
-            <CardTitle className="text-3xl text-blue-600">
-              {stats.totalBalance.toLocaleString()}P
-            </CardTitle>
-          </CardHeader>
-        </Card>
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                <Wallet className="w-4 h-4 text-blue-500" />
+              </div>
+              <span className="text-sm text-gray-500">총 보유 포인트</span>
+            </div>
+            <p className="text-2xl font-bold text-blue-600">{stats.totalBalance.toLocaleString()}P</p>
+          </div>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-1 text-xs">
-              <DollarSign className="w-3 h-3" />
-              총 적립 포인트
-            </CardDescription>
-            <CardTitle className="text-3xl text-green-600">
-              {stats.totalEarned.toLocaleString()}P
-            </CardTitle>
-          </CardHeader>
-        </Card>
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-emerald-500" />
+              </div>
+              <span className="text-sm text-gray-500">총 적립 포인트</span>
+            </div>
+            <p className="text-2xl font-bold text-emerald-600">{stats.totalEarned.toLocaleString()}P</p>
+          </div>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-1 text-xs">
-              <DollarSign className="w-3 h-3" />
-              총 출금 완료
-            </CardDescription>
-            <CardTitle className="text-3xl">
-              {stats.totalWithdrawn.toLocaleString()}원
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-
-      {/* 검색 & 정렬 */}
-      <div className="flex gap-4 items-center">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="이름 또는 연락처로 검색..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-gray-500" />
+              </div>
+              <span className="text-sm text-gray-500">총 출금 완료</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.totalWithdrawn.toLocaleString()}원</p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant={sortBy === 'balance' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSortBy('balance')}
-          >
-            보유순
-          </Button>
-          <Button
-            variant={sortBy === 'earned' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSortBy('earned')}
-          >
-            적립순
-          </Button>
-          <Button
-            variant={sortBy === 'name' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSortBy('name')}
-          >
-            이름순
-          </Button>
-        </div>
-      </div>
 
-      {/* 리뷰어 목록 */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>리뷰어</TableHead>
-                <TableHead>연락처</TableHead>
-                <TableHead>리뷰 수</TableHead>
-                <TableHead className="text-right">총 적립</TableHead>
-                <TableHead className="text-right">총 출금</TableHead>
-                <TableHead className="text-right">대기중 출금</TableHead>
-                <TableHead className="text-right">현재 잔액</TableHead>
-                <TableHead>계좌 정보</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12">
-                    로딩 중...
-                  </TableCell>
-                </TableRow>
-              ) : filteredReviewers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12 text-gray-500">
-                    리뷰어가 없습니다
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredReviewers.map((reviewer) => (
-                  <TableRow key={reviewer.id}>
-                    <TableCell>
+        {/* 검색 & 정렬 */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="이름 또는 연락처로 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSortBy('balance')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                sortBy === 'balance'
+                  ? 'bg-[#4F46E5] text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              보유순
+            </button>
+            <button
+              onClick={() => setSortBy('earned')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                sortBy === 'earned'
+                  ? 'bg-[#4F46E5] text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              적립순
+            </button>
+            <button
+              onClick={() => setSortBy('name')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                sortBy === 'name'
+                  ? 'bg-[#4F46E5] text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              이름순
+            </button>
+          </div>
+        </div>
+
+        {/* 테이블 */}
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          {/* 헤더 */}
+          <div className="grid grid-cols-8 gap-4 px-5 py-3 bg-gray-50 text-xs font-medium text-gray-500 border-b border-gray-100">
+            <div>리뷰어</div>
+            <div>연락처</div>
+            <div className="text-center">리뷰 수</div>
+            <div className="text-right">총 적립</div>
+            <div className="text-right">총 출금</div>
+            <div className="text-right">대기중 출금</div>
+            <div className="text-right">현재 잔액</div>
+            <div>계좌 정보</div>
+          </div>
+
+          {/* 목록 */}
+          {filteredReviewers.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-sm text-gray-500">리뷰어가 없습니다</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {filteredReviewers.map((reviewer) => (
+                <div key={reviewer.id} className="grid grid-cols-8 gap-4 px-5 py-4 items-center hover:bg-gray-50 transition-colors">
+                  <div>
+                    <p className="font-medium text-gray-900">{reviewer.name}</p>
+                    <p className="text-xs text-gray-500">평점 {reviewer.rating.toFixed(1)}</p>
+                  </div>
+                  <div className="text-sm text-gray-600">{reviewer.phone}</div>
+                  <div className="text-center">
+                    <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                      {reviewer.review_count}건
+                    </span>
+                  </div>
+                  <div className="text-right text-sm text-emerald-600">
+                    +{reviewer.total_earned.toLocaleString()}P
+                  </div>
+                  <div className="text-right text-sm text-gray-900">
+                    {reviewer.total_withdrawn.toLocaleString()}원
+                  </div>
+                  <div className="text-right text-sm">
+                    {reviewer.pending_withdrawal > 0 ? (
+                      <span className="text-amber-600">
+                        {reviewer.pending_withdrawal.toLocaleString()}원
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </div>
+                  <div className="text-right text-sm font-bold text-blue-600">
+                    {reviewer.point_balance.toLocaleString()}P
+                  </div>
+                  <div className="text-sm">
+                    {reviewer.bank_name && reviewer.bank_account ? (
                       <div>
-                        <div className="font-medium">{reviewer.name}</div>
-                        <div className="text-xs text-gray-500">
-                          평점 {reviewer.rating.toFixed(1)}
-                        </div>
+                        <p className="text-gray-900">{reviewer.bank_name}</p>
+                        <p className="text-gray-500">{reviewer.bank_account}</p>
                       </div>
-                    </TableCell>
-                    <TableCell>{reviewer.phone}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{reviewer.review_count}건</Badge>
-                    </TableCell>
-                    <TableCell className="text-right text-green-600">
-                      +{reviewer.total_earned.toLocaleString()}P
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {reviewer.total_withdrawn.toLocaleString()}원
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {reviewer.pending_withdrawal > 0 ? (
-                        <span className="text-yellow-600">
-                          {reviewer.pending_withdrawal.toLocaleString()}원
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-bold text-blue-600">
-                      {reviewer.point_balance.toLocaleString()}P
-                    </TableCell>
-                    <TableCell>
-                      {reviewer.bank_name && reviewer.bank_account ? (
-                        <div className="text-sm">
-                          <div>{reviewer.bank_name}</div>
-                          <div className="text-gray-500">{reviewer.bank_account}</div>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 text-sm">미등록</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {!isLoading && filteredReviewers.length > 0 && (
-        <div className="text-center text-sm text-gray-500">
-          총 {filteredReviewers.length}명의 리뷰어
+                    ) : (
+                      <span className="text-gray-400">미등록</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* 총 인원 */}
+        {filteredReviewers.length > 0 && (
+          <div className="text-center text-sm text-gray-500 mt-6">
+            총 {filteredReviewers.length}명의 리뷰어
+          </div>
+        )}
+      </div>
     </div>
   )
 }
