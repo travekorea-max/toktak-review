@@ -384,9 +384,9 @@ export default function HomePage() {
             </Link>
             <div className="flex gap-6">
               <Link href="/reviewer/campaigns" className="text-sm text-gray-400 hover:text-white transition-colors">캠페인</Link>
-              <Link href="#" className="text-sm text-gray-400 hover:text-white transition-colors">이용약관</Link>
-              <Link href="#" className="text-sm text-gray-400 hover:text-white transition-colors">개인정보처리방침</Link>
-              <Link href="#" className="text-sm text-gray-400 hover:text-white transition-colors">문의하기</Link>
+              <Link href="/terms" className="text-sm text-gray-400 hover:text-white transition-colors">이용약관</Link>
+              <Link href="/privacy" className="text-sm text-gray-400 hover:text-white transition-colors">개인정보처리방침</Link>
+              <a href="mailto:support@toktak-review.com" className="text-sm text-gray-400 hover:text-white transition-colors">문의하기</a>
             </div>
           </div>
           <div className="pt-6 border-t border-gray-800">
