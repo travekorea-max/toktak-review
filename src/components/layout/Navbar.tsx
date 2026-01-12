@@ -63,14 +63,14 @@ export function Navbar({ links }: NavbarProps) {
             </Link>
 
             {/* 데스크톱 네비게이션 */}
-            <div className="hidden lg:flex items-center gap-1">
+            <div className="hidden lg:flex items-center gap-0.5">
               {links.map((link) => {
                 const isActive = pathname === link.href || pathname?.startsWith(link.href + '/')
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                    className={`px-2 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors ${
                       isActive
                         ? 'bg-[#EEF2FF] text-[#4F46E5] font-medium'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
