@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Loader2, CheckCircle2, ArrowLeft } from 'lucide-react'
+import { Loader2, CheckCircle2, ArrowLeft, Building2, Mail, Lock, User, Phone, FileText } from 'lucide-react'
 
 const clientRegisterSchema = z.object({
   email: z.string().email('올바른 이메일 형식이 아닙니다'),
@@ -208,30 +208,41 @@ export default function ClientRegisterPage() {
   return (
     <div className="max-w-lg mx-auto">
       {/* 뒤로가기 */}
-      <Link href="/auth/register" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 mb-6">
+      <Link href="/auth/register" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 mb-6 transition-colors">
         <ArrowLeft className="w-4 h-4" />
         가입 유형 선택
       </Link>
 
-      {/* 타이틀 */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">광고주 회원가입</h1>
-        <p className="text-sm text-gray-500 mt-2">
-          체험단 모집으로 매출을 올리세요
-        </p>
+      {/* 헤더 카드 */}
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
+        <div className="relative">
+          <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4">
+            <Building2 className="w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-bold mb-1">광고주 회원가입</h1>
+          <p className="text-white/70 text-sm">
+            체험단 모집으로 매출을 올리세요
+          </p>
+        </div>
       </div>
 
       {/* 폼 */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-lg shadow-gray-200/30 space-y-5">
         {error && (
-          <div className="p-3 bg-red-50 border border-red-100 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="p-4 bg-red-50 border border-red-100 rounded-xl">
+            <p className="text-sm text-red-600 font-medium">{error}</p>
           </div>
         )}
 
         {/* 계정 정보 섹션 */}
         <div className="space-y-4">
-          <h3 className="text-sm font-medium text-gray-900">계정 정보</h3>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-gray-900 rounded-lg flex items-center justify-center">
+              <Mail className="w-3 h-3 text-white" />
+            </div>
+            <h3 className="text-sm font-semibold text-gray-900">계정 정보</h3>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium text-gray-700">
@@ -241,7 +252,7 @@ export default function ClientRegisterPage() {
               id="email"
               type="email"
               placeholder="example@company.com"
-              className="h-11 bg-white border-gray-200"
+              className="h-12 bg-white border-gray-200 rounded-xl"
               {...register('email')}
               disabled={isLoading}
             />
@@ -255,14 +266,17 @@ export default function ClientRegisterPage() {
               <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                 비밀번호 <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="최소 6자"
-                className="h-11 bg-white border-gray-200"
-                {...register('password')}
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="최소 6자"
+                  className="h-12 pl-10 bg-white border-gray-200 rounded-xl"
+                  {...register('password')}
+                  disabled={isLoading}
+                />
+              </div>
               {errors.password && (
                 <p className="text-xs text-red-500">{errors.password.message}</p>
               )}
@@ -272,14 +286,17 @@ export default function ClientRegisterPage() {
               <Label htmlFor="passwordConfirm" className="text-sm font-medium text-gray-700">
                 비밀번호 확인 <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="passwordConfirm"
-                type="password"
-                placeholder="비밀번호 확인"
-                className="h-11 bg-white border-gray-200"
-                {...register('passwordConfirm')}
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="passwordConfirm"
+                  type="password"
+                  placeholder="비밀번호 확인"
+                  className="h-12 pl-10 bg-white border-gray-200 rounded-xl"
+                  {...register('passwordConfirm')}
+                  disabled={isLoading}
+                />
+              </div>
               {errors.passwordConfirm && (
                 <p className="text-xs text-red-500">{errors.passwordConfirm.message}</p>
               )}
@@ -288,8 +305,13 @@ export default function ClientRegisterPage() {
         </div>
 
         {/* 사업자 정보 섹션 */}
-        <div className="space-y-4 pt-4 border-t border-gray-100">
-          <h3 className="text-sm font-medium text-gray-900">사업자 정보</h3>
+        <div className="space-y-4 pt-5 border-t border-gray-100">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-gray-900 rounded-lg flex items-center justify-center">
+              <Building2 className="w-3 h-3 text-white" />
+            </div>
+            <h3 className="text-sm font-semibold text-gray-900">사업자 정보</h3>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -300,7 +322,7 @@ export default function ClientRegisterPage() {
                 id="companyName"
                 type="text"
                 placeholder="(주)회사명"
-                className="h-11 bg-white border-gray-200"
+                className="h-12 bg-white border-gray-200 rounded-xl"
                 {...register('companyName')}
                 disabled={isLoading}
               />
@@ -313,14 +335,17 @@ export default function ClientRegisterPage() {
               <Label htmlFor="representativeName" className="text-sm font-medium text-gray-700">
                 대표자명 <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="representativeName"
-                type="text"
-                placeholder="홍길동"
-                className="h-11 bg-white border-gray-200"
-                {...register('representativeName')}
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="representativeName"
+                  type="text"
+                  placeholder="홍길동"
+                  className="h-12 pl-10 bg-white border-gray-200 rounded-xl"
+                  {...register('representativeName')}
+                  disabled={isLoading}
+                />
+              </div>
               {errors.representativeName && (
                 <p className="text-xs text-red-500">{errors.representativeName.message}</p>
               )}
@@ -331,15 +356,18 @@ export default function ClientRegisterPage() {
             <Label htmlFor="businessNumber" className="text-sm font-medium text-gray-700">
               사업자등록번호 <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="businessNumber"
-              type="text"
-              placeholder="1234567890 (- 제외 10자리)"
-              className="h-11 bg-white border-gray-200"
-              {...register('businessNumber')}
-              disabled={isLoading}
-              maxLength={10}
-            />
+            <div className="relative">
+              <FileText className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                id="businessNumber"
+                type="text"
+                placeholder="1234567890 (- 제외 10자리)"
+                className="h-12 pl-10 bg-white border-gray-200 rounded-xl"
+                {...register('businessNumber')}
+                disabled={isLoading}
+                maxLength={10}
+              />
+            </div>
             {errors.businessNumber && (
               <p className="text-xs text-red-500">{errors.businessNumber.message}</p>
             )}
@@ -350,24 +378,27 @@ export default function ClientRegisterPage() {
               담당자 연락처 <span className="text-red-500">*</span>
             </Label>
             <div className="flex gap-2">
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="010-1234-5678"
-                className="h-11 bg-white border-gray-200 flex-1"
-                {...register('phone')}
-                disabled={isLoading || phoneVerified}
-              />
+              <div className="relative flex-1">
+                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="010-1234-5678"
+                  className="h-12 pl-10 bg-white border-gray-200 rounded-xl"
+                  {...register('phone')}
+                  disabled={isLoading || phoneVerified}
+                />
+              </div>
               <Button
                 type="button"
                 variant={phoneVerified ? "default" : "outline"}
                 onClick={sendVerificationCode}
                 disabled={isLoading || sendingCode || phoneVerified || !phone}
-                className={`h-11 px-4 whitespace-nowrap ${phoneVerified ? 'bg-emerald-500 hover:bg-emerald-600' : ''}`}
+                className={`h-12 px-5 rounded-xl whitespace-nowrap ${phoneVerified ? 'bg-emerald-500 hover:bg-emerald-600' : 'border-gray-200 hover:bg-gray-50'}`}
               >
                 {phoneVerified ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                    <CheckCircle2 className="w-4 h-4 mr-1.5" />
                     완료
                   </>
                 ) : sendingCode ? (
@@ -390,7 +421,7 @@ export default function ClientRegisterPage() {
                   id="verificationCode"
                   type="text"
                   placeholder="6자리 숫자"
-                  className="h-11 bg-white border-gray-200 flex-1"
+                  className="h-12 bg-white border-gray-200 flex-1 rounded-xl"
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value)}
                   disabled={isLoading || verifyingCode || phoneVerified}
@@ -400,7 +431,7 @@ export default function ClientRegisterPage() {
                   type="button"
                   onClick={verifyCode}
                   disabled={isLoading || verifyingCode || !verificationCode}
-                  className="h-11 px-6 bg-gray-900 hover:bg-gray-800"
+                  className="h-12 px-6 bg-gray-900 hover:bg-gray-800 rounded-xl"
                 >
                   {verifyingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : '확인'}
                 </Button>
@@ -411,31 +442,33 @@ export default function ClientRegisterPage() {
         </div>
 
         {/* 약관 동의 */}
-        <div className="space-y-3 pt-4 border-t border-gray-100">
-          <div className="flex items-center gap-2">
+        <div className="space-y-3 pt-5 border-t border-gray-100">
+          <div className="flex items-center gap-2.5">
             <Checkbox
               id="agreeTerms"
               checked={agreeTerms}
               onCheckedChange={(checked) => setValue('agreeTerms', checked as boolean)}
               disabled={isLoading}
+              className="data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
             />
             <label htmlFor="agreeTerms" className="text-sm text-gray-600">
-              <Link href="#" className="text-gray-900 hover:underline">이용약관</Link>에 동의합니다 (필수)
+              <Link href="#" className="text-gray-900 font-medium hover:underline">이용약관</Link>에 동의합니다 (필수)
             </label>
           </div>
           {errors.agreeTerms && (
             <p className="text-xs text-red-500">{errors.agreeTerms.message}</p>
           )}
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Checkbox
               id="agreePrivacy"
               checked={agreePrivacy}
               onCheckedChange={(checked) => setValue('agreePrivacy', checked as boolean)}
               disabled={isLoading}
+              className="data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
             />
             <label htmlFor="agreePrivacy" className="text-sm text-gray-600">
-              <Link href="#" className="text-gray-900 hover:underline">개인정보처리방침</Link>에 동의합니다 (필수)
+              <Link href="#" className="text-gray-900 font-medium hover:underline">개인정보처리방침</Link>에 동의합니다 (필수)
             </label>
           </div>
           {errors.agreePrivacy && (
@@ -445,7 +478,7 @@ export default function ClientRegisterPage() {
 
         <Button
           type="submit"
-          className="w-full h-11 bg-gray-900 hover:bg-gray-800 text-white font-medium"
+          className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl shadow-lg shadow-gray-900/25"
           disabled={isLoading}
         >
           {isLoading ? (
@@ -463,7 +496,7 @@ export default function ClientRegisterPage() {
       <div className="text-center mt-6">
         <p className="text-sm text-gray-500">
           이미 계정이 있으신가요?{' '}
-          <Link href="/auth/login" className="text-gray-900 font-medium hover:underline">
+          <Link href="/auth/login" className="text-gray-900 font-semibold hover:underline">
             로그인
           </Link>
         </p>

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Loader2, CheckCircle2, ArrowLeft } from 'lucide-react'
+import { Loader2, CheckCircle2, ArrowLeft, Gift, Mail, Lock, User, Phone, Sparkles } from 'lucide-react'
 
 const reviewerRegisterSchema = z.object({
   email: z.string().email('올바른 이메일 형식이 아닙니다'),
@@ -194,24 +194,30 @@ export default function ReviewerRegisterPage() {
   return (
     <div className="max-w-md mx-auto">
       {/* 뒤로가기 */}
-      <Link href="/auth/register" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 mb-6">
+      <Link href="/auth/register" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#4F46E5] mb-6 transition-colors">
         <ArrowLeft className="w-4 h-4" />
         가입 유형 선택
       </Link>
 
-      {/* 타이틀 */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">리뷰어 회원가입</h1>
-        <p className="text-sm text-gray-500 mt-2">
-          무료 체험하고 포인트를 받으세요
-        </p>
+      {/* 헤더 카드 */}
+      <div className="bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+        <div className="relative">
+          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4">
+            <Gift className="w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-bold mb-1">리뷰어 회원가입</h1>
+          <p className="text-white/80 text-sm">
+            무료 체험하고 포인트를 받으세요
+          </p>
+        </div>
       </div>
 
       {/* 폼 */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-lg shadow-gray-200/30 space-y-5">
         {error && (
-          <div className="p-3 bg-red-50 border border-red-100 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="p-4 bg-red-50 border border-red-100 rounded-xl">
+            <p className="text-sm text-red-600 font-medium">{error}</p>
           </div>
         )}
 
@@ -219,14 +225,17 @@ export default function ReviewerRegisterPage() {
           <Label htmlFor="email" className="text-sm font-medium text-gray-700">
             이메일 <span className="text-red-500">*</span>
           </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="example@email.com"
-            className="h-11 bg-white border-gray-200"
-            {...register('email')}
-            disabled={isLoading}
-          />
+          <div className="relative">
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="example@email.com"
+              className="h-12 pl-10 bg-white border-gray-200 rounded-xl focus:border-[#4F46E5] focus:ring-[#4F46E5]"
+              {...register('email')}
+              disabled={isLoading}
+            />
+          </div>
           {errors.email && (
             <p className="text-xs text-red-500">{errors.email.message}</p>
           )}
@@ -237,14 +246,17 @@ export default function ReviewerRegisterPage() {
             <Label htmlFor="password" className="text-sm font-medium text-gray-700">
               비밀번호 <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="최소 6자"
-              className="h-11 bg-white border-gray-200"
-              {...register('password')}
-              disabled={isLoading}
-            />
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                id="password"
+                type="password"
+                placeholder="최소 6자"
+                className="h-12 pl-10 bg-white border-gray-200 rounded-xl"
+                {...register('password')}
+                disabled={isLoading}
+              />
+            </div>
             {errors.password && (
               <p className="text-xs text-red-500">{errors.password.message}</p>
             )}
@@ -254,14 +266,17 @@ export default function ReviewerRegisterPage() {
             <Label htmlFor="passwordConfirm" className="text-sm font-medium text-gray-700">
               비밀번호 확인 <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="passwordConfirm"
-              type="password"
-              placeholder="비밀번호 확인"
-              className="h-11 bg-white border-gray-200"
-              {...register('passwordConfirm')}
-              disabled={isLoading}
-            />
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                id="passwordConfirm"
+                type="password"
+                placeholder="비밀번호 확인"
+                className="h-12 pl-10 bg-white border-gray-200 rounded-xl"
+                {...register('passwordConfirm')}
+                disabled={isLoading}
+              />
+            </div>
             {errors.passwordConfirm && (
               <p className="text-xs text-red-500">{errors.passwordConfirm.message}</p>
             )}
@@ -272,14 +287,17 @@ export default function ReviewerRegisterPage() {
           <Label htmlFor="name" className="text-sm font-medium text-gray-700">
             이름 <span className="text-red-500">*</span>
           </Label>
-          <Input
-            id="name"
-            type="text"
-            placeholder="홍길동"
-            className="h-11 bg-white border-gray-200"
-            {...register('name')}
-            disabled={isLoading}
-          />
+          <div className="relative">
+            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              id="name"
+              type="text"
+              placeholder="홍길동"
+              className="h-12 pl-10 bg-white border-gray-200 rounded-xl"
+              {...register('name')}
+              disabled={isLoading}
+            />
+          </div>
           {errors.name && (
             <p className="text-xs text-red-500">{errors.name.message}</p>
           )}
@@ -290,24 +308,27 @@ export default function ReviewerRegisterPage() {
             전화번호 <span className="text-red-500">*</span>
           </Label>
           <div className="flex gap-2">
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="010-1234-5678"
-              className="h-11 bg-white border-gray-200 flex-1"
-              {...register('phone')}
-              disabled={isLoading || phoneVerified}
-            />
+            <div className="relative flex-1">
+              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="010-1234-5678"
+                className="h-12 pl-10 bg-white border-gray-200 rounded-xl"
+                {...register('phone')}
+                disabled={isLoading || phoneVerified}
+              />
+            </div>
             <Button
               type="button"
               variant={phoneVerified ? "default" : "outline"}
               onClick={sendVerificationCode}
               disabled={isLoading || sendingCode || phoneVerified || !phone}
-              className={`h-11 px-4 whitespace-nowrap ${phoneVerified ? 'bg-emerald-500 hover:bg-emerald-600' : ''}`}
+              className={`h-12 px-5 rounded-xl whitespace-nowrap ${phoneVerified ? 'bg-emerald-500 hover:bg-emerald-600' : 'border-gray-200 hover:bg-gray-50'}`}
             >
               {phoneVerified ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4 mr-1" />
+                  <CheckCircle2 className="w-4 h-4 mr-1.5" />
                   완료
                 </>
               ) : sendingCode ? (
@@ -330,7 +351,7 @@ export default function ReviewerRegisterPage() {
                 id="verificationCode"
                 type="text"
                 placeholder="6자리 숫자"
-                className="h-11 bg-white border-gray-200 flex-1"
+                className="h-12 bg-white border-gray-200 flex-1 rounded-xl"
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value)}
                 disabled={isLoading || verifyingCode || phoneVerified}
@@ -340,7 +361,7 @@ export default function ReviewerRegisterPage() {
                 type="button"
                 onClick={verifyCode}
                 disabled={isLoading || verifyingCode || !verificationCode}
-                className="h-11 px-6 bg-[#4F46E5] hover:bg-[#4338CA]"
+                className="h-12 px-6 bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] hover:from-[#4338CA] hover:to-[#6D28D9] rounded-xl"
               >
                 {verifyingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : '확인'}
               </Button>
@@ -351,30 +372,32 @@ export default function ReviewerRegisterPage() {
 
         {/* 약관 동의 */}
         <div className="space-y-3 pt-4 border-t border-gray-100">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Checkbox
               id="agreeTerms"
               checked={agreeTerms}
               onCheckedChange={(checked) => setValue('agreeTerms', checked as boolean)}
               disabled={isLoading}
+              className="data-[state=checked]:bg-[#4F46E5] data-[state=checked]:border-[#4F46E5]"
             />
             <label htmlFor="agreeTerms" className="text-sm text-gray-600">
-              <Link href="#" className="text-[#4F46E5] hover:underline">이용약관</Link>에 동의합니다 (필수)
+              <Link href="#" className="text-[#4F46E5] font-medium hover:underline">이용약관</Link>에 동의합니다 (필수)
             </label>
           </div>
           {errors.agreeTerms && (
             <p className="text-xs text-red-500">{errors.agreeTerms.message}</p>
           )}
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Checkbox
               id="agreePrivacy"
               checked={agreePrivacy}
               onCheckedChange={(checked) => setValue('agreePrivacy', checked as boolean)}
               disabled={isLoading}
+              className="data-[state=checked]:bg-[#4F46E5] data-[state=checked]:border-[#4F46E5]"
             />
             <label htmlFor="agreePrivacy" className="text-sm text-gray-600">
-              <Link href="#" className="text-[#4F46E5] hover:underline">개인정보처리방침</Link>에 동의합니다 (필수)
+              <Link href="#" className="text-[#4F46E5] font-medium hover:underline">개인정보처리방침</Link>에 동의합니다 (필수)
             </label>
           </div>
           {errors.agreePrivacy && (
@@ -384,7 +407,7 @@ export default function ReviewerRegisterPage() {
 
         <Button
           type="submit"
-          className="w-full h-11 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-medium"
+          className="w-full h-12 bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] hover:from-[#4338CA] hover:to-[#6D28D9] text-white font-medium rounded-xl shadow-lg shadow-[#4F46E5]/25"
           disabled={isLoading}
         >
           {isLoading ? (
@@ -402,7 +425,7 @@ export default function ReviewerRegisterPage() {
       <div className="text-center mt-6">
         <p className="text-sm text-gray-500">
           이미 계정이 있으신가요?{' '}
-          <Link href="/auth/login" className="text-[#4F46E5] font-medium hover:underline">
+          <Link href="/auth/login" className="text-[#4F46E5] font-semibold hover:underline">
             로그인
           </Link>
         </p>

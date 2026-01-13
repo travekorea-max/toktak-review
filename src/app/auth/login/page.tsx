@@ -11,7 +11,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Mail, Lock, Sparkles } from 'lucide-react'
 
 const loginSchema = z.object({
   email: z.string().email('올바른 이메일 형식이 아닙니다'),
@@ -98,9 +98,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div>
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl shadow-gray-200/50 p-8 border border-gray-100">
       {/* 타이틀 */}
       <div className="text-center mb-8">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#4F46E5]/10 to-[#7C3AED]/10 rounded-full mb-4">
+          <Sparkles className="w-3.5 h-3.5 text-[#4F46E5]" />
+          <span className="text-xs font-medium text-[#4F46E5]">Welcome Back</span>
+        </div>
         <h1 className="text-2xl font-bold text-gray-900">로그인</h1>
         <p className="text-sm text-gray-500 mt-2">
           톡톡리뷰에 오신 것을 환영합니다
@@ -110,8 +114,8 @@ export default function LoginPage() {
       {/* 폼 */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {error && (
-          <div className="p-3 bg-red-50 border border-red-100 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="p-4 bg-red-50 border border-red-100 rounded-xl">
+            <p className="text-sm text-red-600 font-medium">{error}</p>
           </div>
         )}
 
@@ -119,14 +123,17 @@ export default function LoginPage() {
           <Label htmlFor="email" className="text-sm font-medium text-gray-700">
             이메일
           </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="example@email.com"
-            className="h-11 bg-white border-gray-200 focus:border-[#4F46E5] focus:ring-[#4F46E5]"
-            {...register('email')}
-            disabled={isLoading}
-          />
+          <div className="relative">
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="example@email.com"
+              className="h-12 pl-10 bg-white border-gray-200 focus:border-[#4F46E5] focus:ring-[#4F46E5] rounded-xl"
+              {...register('email')}
+              disabled={isLoading}
+            />
+          </div>
           {errors.email && (
             <p className="text-xs text-red-500">{errors.email.message}</p>
           )}
@@ -137,18 +144,21 @@ export default function LoginPage() {
             <Label htmlFor="password" className="text-sm font-medium text-gray-700">
               비밀번호
             </Label>
-            <Link href="/auth/forgot-password" className="text-xs text-gray-500 hover:text-[#4F46E5]">
+            <Link href="/auth/forgot-password" className="text-xs text-gray-500 hover:text-[#4F46E5] transition-colors">
               비밀번호 찾기
             </Link>
           </div>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            className="h-11 bg-white border-gray-200 focus:border-[#4F46E5] focus:ring-[#4F46E5]"
-            {...register('password')}
-            disabled={isLoading}
-          />
+          <div className="relative">
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              className="h-12 pl-10 bg-white border-gray-200 focus:border-[#4F46E5] focus:ring-[#4F46E5] rounded-xl"
+              {...register('password')}
+              disabled={isLoading}
+            />
+          </div>
           {errors.password && (
             <p className="text-xs text-red-500">{errors.password.message}</p>
           )}
@@ -156,7 +166,7 @@ export default function LoginPage() {
 
         <Button
           type="submit"
-          className="w-full h-11 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-medium"
+          className="w-full h-12 bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] hover:from-[#4338CA] hover:to-[#6D28D9] text-white font-medium rounded-xl shadow-lg shadow-[#4F46E5]/25 hover:shadow-xl hover:shadow-[#4F46E5]/30 transition-all"
           disabled={isLoading}
         >
           {isLoading ? (
@@ -176,7 +186,7 @@ export default function LoginPage() {
           <div className="w-full border-t border-gray-200" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="px-4 bg-[#FAFBFC] text-gray-400">또는</span>
+          <span className="px-4 bg-white text-gray-400">또는</span>
         </div>
       </div>
 
@@ -184,7 +194,7 @@ export default function LoginPage() {
       <div className="text-center">
         <p className="text-sm text-gray-500">
           아직 계정이 없으신가요?{' '}
-          <Link href="/auth/register" className="text-[#4F46E5] font-medium hover:underline">
+          <Link href="/auth/register" className="text-[#4F46E5] font-semibold hover:underline">
             회원가입
           </Link>
         </p>
